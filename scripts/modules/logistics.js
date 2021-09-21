@@ -1,4 +1,4 @@
-import { logger } from '../logger.js'
+import { logger } from './logger.js'
 
 
 
@@ -33,23 +33,23 @@ export class Logistics {
     return isOwner;
   }
 
-  /* follower[leaderId]={ paused: Boolean, deltaVector: {angle,distance}}
+  /* followerData[leaderId]={ paused: Boolean, deltaVector: {angle,distance}}
    * where deltaVector is the offset relative
    * to the unit followVector of the leader
    */
-  static async _moveFollower( follower, data ) {
+  static async _moveFollower( followerId, data ) {
 
     /* only handle *ours* no matter what anybody says */
-    const token = game.scenes.get(follower.sceneId).getEmbeddedDocument("Token", follower.tokenId);
+    const token = game.scenes.get(followerId.sceneId).getEmbeddedDocument("Token", followerId.tokenId);
     if (MODULE.isFirstOwner(token)) return;
 
     /* get our follower information */
-    const follower = token.getFlag(MODULE.data.name, MODULE['Lookout']?.followingFlag) ?? {};
+    const followerData = token.getFlag(MODULE.data.name, MODULE['Lookout']?.followingFlag) ?? {};
 
     /* are we paused or have improper information? */
-    if( (follower[data.leader.tokenId]?.paused ?? true) ) return;
+    if( (followerData[data.leader.tokenId]?.paused ?? true) ) return;
 
-    const {deltaVector} = follower[data.leader.tokenId];
+    const {deltaVector} = followerData[data.leader.tokenId];
 
     /* from follow vector, calculate our new position */
     const {followVector, finalPosition} = data.leader;
@@ -68,10 +68,10 @@ export class Logistics {
     return newLocation.B; 
   }
 
-  static handleLeaderMove(data) {
+  static async handleLeaderMove(data) {
 
-    for(const follower of data.followers){
-      await Logistics._moveFollower( follower, data )
+    for(const followerId of data.followers){
+      await Logistics._moveFollower( followerId, data )
     }
   }
 

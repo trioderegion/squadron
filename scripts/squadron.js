@@ -24,10 +24,12 @@
  */
 import { MODULE } from './module.js';
 import { logger } from './modules/logger.js';
+import { UserInterface } from './modules/user-interface.js'
 
 const SUB_MODULES = {
   MODULE,
   logger,
+  UserInterface,
 }
 
 /*

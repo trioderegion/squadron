@@ -4,7 +4,6 @@ import { Logistics } from './logistics.js'
 
 const NAME = 'Lookout';
 
-
 export class Lookout {
 
   static register() {
