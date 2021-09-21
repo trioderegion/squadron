@@ -2,6 +2,7 @@
 
 import { MODULE } from '../module.js'
 import { Logistics } from './logistics.js'
+import { Lookout } from './lookout.js'
 
 const NAME = 'UserInterface';
 
@@ -16,18 +17,17 @@ export class UserInterface {
   }
 
   static _renderTokenHUD(app, html, data){
-    UserInterface._addFollowLeader(html, data);
+    UserInterface._addFollowLeader(html, app?.object?.document);
   }
 
-  static _addFollowLeader(html, data) {
+  static _addFollowLeader(html, selectedToken) {
+
+    if (!selectedToken) return;
 
     const button = $(`<div class="control-icon squadron" title="text"><i class="fas fa-anchor"></i></div>`);
 
-    const followerTokenData = data;
-    if (!followerTokenData) return;
-
     button.click( (event) => {
-      UserInterface._targetLeader(followerTokenData);
+      UserInterface._targetLeader(selectedToken);
     });
 
     const column = '.col.left';
@@ -44,11 +44,15 @@ export class UserInterface {
       }
 
       ui.notifications.info(`${token.name} is being followed by ${followerToken.name}`);
+      
+      warpgate.plugin.queueUpdate( async () => {
+        await Lookout.addFollower(token.id, followerToken.id, followerToken.parent.id);
 
-      game.user.updateTokenTargets();
+        game.user.updateTokenTargets();
 
-      /* switch back to select */
-      UserInterface._activateTool(canvas.tokens, 'select');  
+        /* switch back to select */
+        UserInterface._activateTool(canvas.tokens, 'select');  
+      });
 
       return false;
      
