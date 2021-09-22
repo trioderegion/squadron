@@ -18,9 +18,16 @@ export class Lookout {
     Hooks.once('ready', () => {
       Hooks.on('preUpdateToken', Lookout._preUpdateToken);
       Hooks.on('updateToken', Lookout._updateToken);
+
       warpgate.event.watch(MODULE[NAME].leaderMoveEvent, Logistics.handleLeaderMove, Logistics.containsOwnedFollower);
-      warpgate.event.watch(MODULE[NAME].addFollowerEvent, Logistics.handleAddFollower, Logistics.tokenFirstOwner);
-      warpgate.event.watch(MODULE[NAME].addLeaderEvent, Logistics.handleAddLeader, Logistics.tokenFirstOwner);
+
+      warpgate.event.watch(MODULE[NAME].addFollowerEvent, Logistics.handleAddFollower, Logistics.leaderFirstOwner);
+
+      warpgate.event.watch(MODULE[NAME].addLeaderEvent, Logistics.handleAddLeader, Logistics.followerFirstOwner);
+
+      warpgate.event.watch(MODULE[NAME].removeFollowerEvent, Logistics.handleRemoveFollower, Logistics.leaderFirstOwner);
+
+      warpgate.event.watch(MODULE[NAME].removeLeaderEvent, Logistics.handleRemoveLeader, Logistics.followerFirstOwner);
     });
   }
 
@@ -30,6 +37,8 @@ export class Lookout {
       followerPauseEvent: 'sq-follow-pause',
       addFollowerEvent: 'sq-add-follower',
       addLeaderEvent: 'sq-add-leader',
+      removeFollowerEvent: 'sq-remove-follower',
+      removeLeaderEvent: 'sq-remove-leader',
       followersFlag: 'followers',
       leadersFlag: 'leaders',
       followPause: 'paused',
@@ -91,7 +100,8 @@ export class Lookout {
       /* am I a follower? */
       const leaders = tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].leadersFlag) ?? {};
       if (Object.keys(leaders).length > 0){
-        /* Pause */
+
+        /* I am following someone and have moved independently of them -> Pause */
         warpgate.plugin.queueUpdate( async () => {
           await tokenDoc.setFlag(MODULE.data.name,MODULE[NAME].followPause,true);
         });
@@ -131,9 +141,14 @@ export class Lookout {
     }
 
     /* trigger all relevant events */
-    await warpgate.event.notify(MODULE[NAME].addLeaderEvent, eventData);
     await warpgate.event.notify(MODULE[NAME].addFollowerEvent, eventData);
+    await warpgate.event.notify(MODULE[NAME].addLeaderEvent, eventData);
   }
 
-  // @TODO handle establishing leader/follower pair
+  static async removeFollower(leaderId, followerId, sceneId){
+    
+    await warpgate.event.notify(MODULE[NAME].removeFollowerEvent, {leaderId, followerId, sceneId});
+    await warpgate.event.notify(MODULE[NAME].removeLeaderEvent, {leaderId, followerId, sceneId});
+
+  }
 }

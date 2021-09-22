@@ -17,57 +17,38 @@ export class UserInterface {
   }
 
   static _renderTokenHUD(app, html, data){
-    UserInterface._addFollowLeader(html, app?.object?.document);
-    UserInterface._addResumeFollow(html, app?.object?.document); 
-    UserInterface._addStopFollow(html, app?.object?.document);
+    const token = app?.object?.document;
+    if (!token) return;
+
+    /* which button should we show? */
+    const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    if (paused) {
+
+      /* we are following, but have paused */
+      UserInterface._addHudButton(html, token, 'Rejoin Formation', 'fa-sitemap', 
+        (event)=>{ UserInterface._resumeFollow(token)});
+    } else if (paused === undefined) {
+
+      /* if the pause flag doesnt exist, we arent following anyone */
+      UserInterface._addHudButton(html, token, 'Pick Leader', 'fa-users',
+        (event) => { UserInterface._targetLeader(token)})
+    } else {
+
+      /* otherwise, we are following normally and have the option to stop */
+      UserInterface._addHudButton(html, token, 'Leave Formation', 'fa-users-slash', 
+        (event)=>{ UserInterface._stopFollow(token)});
+    }
   }
 
-  static _addStopFollow(html, selectedToken) {
-    if (!selectedToken) return;
-
-    /* am I following anyone? */
-    const leaders = selectedToken.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {};
-    if (Object.keys(leaders).length == 0) return;
-
-    const button = $(`<div class="control-icon squadron" title="Stop Following"><i class="fas fa-users-slash"></i></div>`);
-
-    button.click( (event) => {
-      UserInterface._stopFollow(selectedToken);
-    });
-
-    const column = '.col.right';
-    html.find(column).append(button);
-
-  }
-
-  static _addFollowLeader(html, selectedToken) {
+  static _addHudButton(html, selectedToken, title, icon, clickEvent) {
 
     if (!selectedToken) return;
 
-    const button = $(`<div class="control-icon squadron" title="Pick Leader"><i class="fas fa-users"></i></div>`);
+    const button = $(`<div class="control-icon squadron" title="${title}"><i class="fas ${icon}"></i></div>`);
 
-    button.click( (event) => {
-      UserInterface._targetLeader(selectedToken);
-    });
+    button.click( clickEvent );
 
     const column = '.col.left';
-    html.find(column).append(button);
-  }
-
-  static _addResumeFollow(html, selectedToken) {
-    if (!selectedToken) return;
-
-    /* only add this button if we are paused */
-    const paused = selectedToken.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ?? false;
-    if (!paused) return;
-
-    const button = $(`<div class="control-icon squadron" title="Rejoin Formation"><i class="fas fa-sitemap"></i></div>`);
-
-    button.click( (event) => {
-      UserInterface._resumeFollow(selectedToken);
-    });
-
-    const column = '.col.right';
     html.find(column).append(button);
   }
 
@@ -87,7 +68,12 @@ export class UserInterface {
     });
   }
 
+  /* UI Controls for switching to targeting,
+   * marking the leader, and notifying
+   */
   static _targetLeader(followerToken) {
+
+    const hud = followerToken.layer.hud;
 
     const onTarget = async (user, token, active) => {
       if(!active || user.id !== game.user.id){
@@ -98,21 +84,31 @@ export class UserInterface {
         return;
       }
 
+      /* confirmation info */
       ui.notifications.info(`${token.name} is being followed by ${followerToken.name}`);
 
       await Lookout.addFollower(token.id, followerToken.id, followerToken.parent.id);
-
+      game.users.get(user.id).broadcastActivity({targets: []})
       game.user.updateTokenTargets();
 
       /* switch back to select */
       UserInterface._activateTool(canvas.tokens, 'select');  
-      token.layer.hud.clear();
-      return true;
-     
+      
+      /* leave the hud turned off to hide the race condition?
+       * that causes the hud to update on target
+       */
+      //hud.bind(followerToken.object);
     };
 
+    /* register our target hook */
     Hooks.once('targetToken', onTarget);
+
+    /* switch to targeting mode */
     UserInterface._activateTool(canvas.tokens, 'target');
+    ui.notifications.info(`Please select the leader token for ${followerToken.name}`)
+
+    /* suppress the token hud */
+    hud.clear();
   }
 
   static _activateTool(layer, toolName) {

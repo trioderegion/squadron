@@ -27,6 +27,7 @@ export class Logistics {
     const isOwner = eventData.followers.reduce( (sum, curr) => {
       if (sum) return sum;
       const token = game.scenes.get(eventData.sceneId).getEmbeddedDocument("Token", curr);
+      if (!token) return sum;
 const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ?? true;
       if (MODULE.isFirstOwner(token.actor) && !paused) return true;
       return sum;
@@ -35,37 +36,52 @@ const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ??
     return isOwner;
   }
 
-  static tokenFirstOwner(eventData) {
+  static leaderFirstOwner(eventData) {
     const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
     return MODULE.isFirstOwner(leader.actor);
+  }
+
+  static followerFirstOwner(eventData) {
+    const follower = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.followerId);
+    return MODULE.isFirstOwner(follower.actor);
   }
 
   /* followerData[leaderId]={ paused: Boolean, deltaVector: {angle,distance}}
    * where deltaVector is the offset relative
    * to the unit followVector of the leader
    */
-  static async _moveFollower( followerId, data ) {
+  static _moveFollower( followerId, data ) {
 
     /* only handle *ours* no matter what anybody says */
     const token = game.scenes.get(data.sceneId).getEmbeddedDocument("Token", followerId);
-    if (!MODULE.isFirstOwner(token.actor)) return;
+    if (!token || !MODULE.isFirstOwner(token.actor)) return;
+
+    const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+
+    if (paused) return;
 
     /* get our follower information */
     const followerData = token.getFlag(MODULE.data.name, MODULE['Lookout']?.leadersFlag) ?? {};
 
     const deltaInfo = followerData[data.leader.tokenId];
 
+    /* null delta means the leader thinks we are following, but are not */
+    if (!deltaInfo){
+      logger.debug(`Leader ${data.leader.tokenId} thinks ${token.name} is following, but they disagree`);
+      return;
+    }
+
     /* from follow vector, calculate our new position */
-    const {followVector, finalPosition} = data.leader;
+    let {followVector, finalPosition} = data.leader;
+
+    if ( typeof followVector !== "Ray" ){
+      /* this was serialized from another client */
+      followVector = new Ray(followVector.A, followVector.B);
+    }
 
     const {x,y} = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo);
 
-    warpgate.plugin.queueUpdate( async ()=>{
-      await token.update({x, y}, {squadronEvent: MODULE['Lookout'].leaderMoveEvent});
-    });
-    
-    //await warpgate.mutate(token, {token: {x,y}}, {}, {permanent: true});
-
+    return {_id: followerId, x,y};
   }
 
   /* unit normal is forward */
@@ -76,13 +92,41 @@ const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ??
     return newLocation.B; 
   }
 
-  static async handleLeaderMove(data) {
+  /* return {Promise} */
+  static handleLeaderMove(data) {
 
-    for(const followerId of data.followers){
-      await Logistics._moveFollower( followerId, data )
-    }
+    let updates = data.followers.map( element => Logistics._moveFollower( element, data ) );
+    updates = updates.reduce( (sum, curr) => {
+      if (!curr) return sum;
+      sum.push(curr);
+      return sum
+    }, []);
+
+    return game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', updates, {squadronEvent: MODULE['Lookout'].leaderMoveEvent})
   }
 
+  static async handleRemoveFollower(eventData) {
+    const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
+
+    const leaderData = (leader.getFlag(MODULE.data.name, MODULE['Lookout'].followersFlag) ?? []);
+
+    /* get new list of followers */
+    const newData = leaderData.reduce( (sum, curr) => {
+      if (curr == eventData.followerId) return sum;
+      sum.push(curr);
+      return sum
+    }, []);
+
+    await leader.setFlag(MODULE.data.name, MODULE['Lookout'].followersFlag, newData);
+  }
+
+  static async handleRemoveLeader(eventData) {
+    const follower = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.followerId);
+
+    await follower.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
+  }
+
+  
   /* leaderData = [follower ids] */
   static async handleAddFollower(eventData) {
     
@@ -110,16 +154,14 @@ const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ??
 
     const followerDelta = Logistics._calculateFollowerDelta(leaderToken.data, leaderAngle, followerToken.data);
 
-    let currentFollowInfo = duplicate(followerToken.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {paused: false});
+    let currentFollowInfo = duplicate(followerToken.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {});
 
     /* stamp in our new data */
     currentFollowInfo[leaderId] = followerDelta;
 
     /* store the data */
-    //warpgate.plugin.queueUpdate( async () => {
-      await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag, currentFollowInfo);
-      await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
-    //});
+    await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag, currentFollowInfo);
+    await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
 
   }
 
