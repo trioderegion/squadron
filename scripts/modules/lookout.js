@@ -31,7 +31,8 @@ export class Lookout {
       addFollowerEvent: 'sq-add-follower',
       addLeaderEvent: 'sq-add-leader',
       followersFlag: 'followers',
-      followingFlag: 'following'
+      leadersFlag: 'leaders',
+      followPause: 'paused',
     }
   }
 
@@ -55,41 +56,50 @@ export class Lookout {
 
       /* am I a leader? */
       const followers = tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].followersFlag) ?? []
-      if (followers.length == 0) return;
+      if (followers.length > 0) {
 
-      //const oldLoc = {
-      //  x: tokenDoc.data.x,
-      //  y: tokenDoc.data.y
-      //}
+        const oldLoc = options.oldLoc;
 
-      const oldLoc = options.oldLoc;
+        const newLoc = {
+          x: update.x ?? tokenDoc.data.x,
+          y: update.y ?? tokenDoc.data.y
+        }
 
-      const newLoc = {
-        x: update.x ?? tokenDoc.data.x,
-        y: update.y ?? tokenDoc.data.y
+        const followVector = Logistics.createFollowVector(newLoc, oldLoc)
+
+        const data = {
+          leader: {
+            tokenId: tokenDoc.id,
+            sceneId: tokenDoc.parent.id,
+            finalPosition: newLoc,
+            followVector
+          },
+          followers,
+        }
+
+        warpgate.plugin.queueUpdate( async () => {
+          await warpgate.event.notify(MODULE[NAME].leaderMoveEvent, data);
+        });
       }
-      
-      const followVector = Logistics.createFollowVector(newLoc, oldLoc)
-
-      const data = {
-        leader: {
-          tokenId: tokenDoc.id,
-          sceneId: tokenDoc.parent.id,
-          finalPosition: newLoc,
-          followVector
-        },
-        followers,
+      // FOLLOWERS
+      if (options.squadronEvent == MODULE[NAME].leaderMoveEvent) {
+        
+        /* do not respond to our own move events */
+        return;
       }
-      // @TODO maybe queue or await
-      
-      warpgate.plugin.queueUpdate( async () => {
-       await warpgate.event.notify(MODULE[NAME].leaderMoveEvent, data);
-      });
+
+      /* am I a follower? */
+      const leaders = tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].leadersFlag) ?? {};
+      if (Object.keys(leaders).length > 0){
+        /* Pause */
+        warpgate.plugin.queueUpdate( async () => {
+          await tokenDoc.setFlag(MODULE.data.name,MODULE[NAME].followPause,true);
+        });
+      }
     }
   }
 
   static async addFollower(leaderId, followerId, sceneId){
-
 
     /* ask for orientation */
     const dialogData = {
