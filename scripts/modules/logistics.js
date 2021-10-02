@@ -7,15 +7,11 @@ export class Logistics {
   
   static createFollowVector(newLoc, oldLoc) {
 
-    let vector = new Ray(newLoc, oldLoc);
-
-    //const followVector = {
-    //  x: ray.x/ray.distance,
-    //  y: ray.y/ray.distance
-    //}
-
+    /* vector is defined as origin at new location
+     * pointing towards oldLoc
+     */
+    const vector = new Ray(newLoc, oldLoc);
     logger.debug('Follow Vector', vector);
-
     return vector;
   }
 
@@ -117,13 +113,20 @@ const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ??
       return sum
     }, []);
 
-    await leader.setFlag(MODULE.data.name, MODULE['Lookout'].followersFlag, newData);
+    if (newData.length > 0) {
+      await leader.setFlag(MODULE.data.name, MODULE['Lookout'].followersFlag, newData);
+    } else {
+      /* no more followers for this leader */
+      await leader.unsetFlag(MODULE.data.name, MODULE['Lookout'].followersFlag);
+    }
   }
+
 
   static async handleRemoveLeader(eventData) {
     const follower = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.followerId);
 
     await follower.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
+    await follower.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
   }
 
   

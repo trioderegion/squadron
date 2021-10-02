@@ -18,6 +18,7 @@ export class Lookout {
     Hooks.once('ready', () => {
       Hooks.on('preUpdateToken', Lookout._preUpdateToken);
       Hooks.on('updateToken', Lookout._updateToken);
+      Hooks.on('deleteToken', Lookout._deleteToken);
 
       warpgate.event.watch(MODULE[NAME].leaderMoveEvent, Logistics.handleLeaderMove, Logistics.containsOwnedFollower);
 
@@ -47,6 +48,50 @@ export class Lookout {
 
   static settings() {
 
+  }
+
+  static _deleteToken(tokenDoc, options, user){
+
+    /* only handle our initiated moves */
+    if (user != game.user.id) return;
+
+    /* am I a leader? */
+    const followers = tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].followersFlag) ?? []
+    if (followers.length > 0) {
+
+      logger.debug('Notifying followers of leader remove. Leader:', tokenDoc, 'Followers:', followers);
+      /* notify each follower that their leader is being removed */
+      followers.forEach( (followerId) => {
+        warpgate.plugin.queueUpdate( () => {
+          return warpgate.event.notify(MODULE[NAME].removeLeaderEvent,
+            {
+              leaderId: tokenDoc.id,
+              followerId,
+              sceneId: tokenDoc.parent.id
+            });
+        });
+      });
+    }
+
+    /* am I a follower? */
+    const leaders = tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].leadersFlag) ?? {};
+    if (Object.keys(leaders).length > 0){
+
+      logger.debug('Notifying leaders of follower remove. Follower:', tokenDoc, 'Leaders:', leaders);
+      /* notify each leader that one of their followers is being removed */
+      Object.keys(leaders).forEach( (leaderId) => {
+        warpgate.plugin.queueUpdate( () => {
+          return warpgate.event.notify(MODULE[NAME].removeFollowerEvent,
+            {
+              leaderId,
+              followerId: tokenDoc.id,
+              sceneId: tokenDoc.parent.id
+            });
+        });
+
+      });
+
+    }
   }
 
   static _preUpdateToken(tokenDoc, update, options, user) {
@@ -145,10 +190,12 @@ export class Lookout {
     await warpgate.event.notify(MODULE[NAME].addLeaderEvent, eventData);
   }
 
+  /* @TODO This...isnt used? right?
   static async removeFollower(leaderId, followerId, sceneId){
     
     await warpgate.event.notify(MODULE[NAME].removeFollowerEvent, {leaderId, followerId, sceneId});
     await warpgate.event.notify(MODULE[NAME].removeLeaderEvent, {leaderId, followerId, sceneId});
 
   }
+  */
 }

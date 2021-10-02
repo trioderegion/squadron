@@ -85,6 +85,6 @@ export class MODULE{
   }
 
   static isFirstOwner(doc){
-    return game.user.id === MODULE.firstOwner(doc).id;
+    return game.user.id === MODULE.firstOwner(doc)?.id;
   }
 }
