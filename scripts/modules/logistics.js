@@ -42,7 +42,7 @@ const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ??
     return MODULE.isFirstOwner(follower.actor);
   }
 
-  /* followerData[leaderId]={ paused: Boolean, deltaVector: {angle,distance}}
+  /* followerData[leaderId]={angle,distance}}
    * where deltaVector is the offset relative
    * to the unit followVector of the leader
    */

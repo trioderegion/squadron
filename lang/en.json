@@ -1,0 +1,17 @@
+{
+  "setting": {
+    "debug": {
+      "name": "Enable Debug Info",
+      "hint": "Logs additional debugging information to the console"
+    }
+  },
+  "workflow": {
+    "pick": "Pick Leader",
+    "rejoin": "Rejoin Formation",
+    "leave": "Leave Formation"
+  },
+  "feedback": {
+    "pickAsk": "Please select the leader token for {followerName}",
+    "pickConfirm": "{leaderName} is being followed by {followerName}"
+  }
+}

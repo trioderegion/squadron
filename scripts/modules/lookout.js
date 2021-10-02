@@ -159,14 +159,14 @@ export class Lookout {
     /* ask for orientation */
     const dialogData = {
       buttons: [{
+        label: 'left',
+        value: {x:1, y:0}
+      },{
         label: 'up',
         value: {x:0, y:-1}
       },{
         label: 'down',
         value: {x:0, y:1}
-      },{
-        label: 'left',
-        value: {x:1, y:0}
       },{
         label: 'right',
         value: {x:-1, y:0}
@@ -175,6 +175,8 @@ export class Lookout {
     }
 
     const orientationVector = await warpgate.buttonDialog(dialogData);
+
+    /* dialog was cancelled */
     if (orientationVector === true) return;
     logger.debug('Behind vector', orientationVector);
 
@@ -189,13 +191,4 @@ export class Lookout {
     await warpgate.event.notify(MODULE[NAME].addFollowerEvent, eventData);
     await warpgate.event.notify(MODULE[NAME].addLeaderEvent, eventData);
   }
-
-  /* @TODO This...isnt used? right?
-  static async removeFollower(leaderId, followerId, sceneId){
-    
-    await warpgate.event.notify(MODULE[NAME].removeFollowerEvent, {leaderId, followerId, sceneId});
-    await warpgate.event.notify(MODULE[NAME].removeLeaderEvent, {leaderId, followerId, sceneId});
-
-  }
-  */
 }

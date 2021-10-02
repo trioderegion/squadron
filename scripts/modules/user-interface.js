@@ -1,7 +1,6 @@
 
 
 import { MODULE } from '../module.js'
-import { Logistics } from './logistics.js'
 import { Lookout } from './lookout.js'
 
 const NAME = 'UserInterface';
@@ -25,17 +24,17 @@ export class UserInterface {
     if (paused) {
 
       /* we are following, but have paused */
-      UserInterface._addHudButton(html, token, 'Rejoin Formation', 'fa-sitemap', 
+      UserInterface._addHudButton(html, token, MODULE.localize('workflow.rejoin'), 'fa-sitemap', 
         (event)=>{ UserInterface._resumeFollow(token)});
     } else if (paused === undefined) {
 
       /* if the pause flag doesnt exist, we arent following anyone */
-      UserInterface._addHudButton(html, token, 'Pick Leader', 'fa-users',
+      UserInterface._addHudButton(html, token, MODULE.localize('workflow.pick'), 'fa-users',
         (event) => { UserInterface._targetLeader(token)})
     } else {
 
       /* otherwise, we are following normally and have the option to stop */
-      UserInterface._addHudButton(html, token, 'Leave Formation', 'fa-users-slash', 
+      UserInterface._addHudButton(html, token, MODULE.localize('workflow.leave'), 'fa-users-slash', 
         (event)=>{ UserInterface._stopFollow(token)});
     }
   }
@@ -85,7 +84,8 @@ export class UserInterface {
       }
 
       /* confirmation info */
-      ui.notifications.info(`${token.name} is being followed by ${followerToken.name}`);
+      const confirmInfo = MODULE.format('feedback.pickConfirm', {leaderName: token.name, followerName: followerToken.name})
+      ui.notifications.info(confirmInfo);
 
       await Lookout.addFollower(token.id, followerToken.id, followerToken.parent.id);
       game.users.get(user.id).broadcastActivity({targets: []})
@@ -105,7 +105,9 @@ export class UserInterface {
 
     /* switch to targeting mode */
     UserInterface._activateTool(canvas.tokens, 'target');
-    ui.notifications.info(`Please select the leader token for ${followerToken.name}`)
+
+    const askInfo = MODULE.format('feedback.pickAsk', {followerName: followerToken.name});
+    ui.notifications.info(askInfo)
 
     /* suppress the token hud */
     hud.clear();
