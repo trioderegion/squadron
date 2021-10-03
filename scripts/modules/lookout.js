@@ -159,19 +159,19 @@ export class Lookout {
     /* ask for orientation */
     const dialogData = {
       buttons: [{
-        label: 'left',
+        label: MODULE.localize('orientation.left'),
         value: {x:1, y:0}
       },{
-        label: 'up',
+        label: MODULE.localize('orientation.up'),
         value: {x:0, y:-1}
       },{
-        label: 'down',
+        label: MODULE.localize('orientation.down'),
         value: {x:0, y:1}
       },{
-        label: 'right',
+        label: MODULE.localize('orientation.right'),
         value: {x:-1, y:0}
       }],
-      title: 'Select marching direction'
+      title: MODULE.localize('orientation.title')
     }
 
     const orientationVector = await warpgate.buttonDialog(dialogData);

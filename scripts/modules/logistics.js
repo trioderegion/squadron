@@ -24,7 +24,7 @@ export class Logistics {
       if (sum) return sum;
       const token = game.scenes.get(eventData.sceneId).getEmbeddedDocument("Token", curr);
       if (!token) return sum;
-const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ?? true;
+      const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ?? true;
       if (MODULE.isFirstOwner(token.actor) && !paused) return true;
       return sum;
     },false)
@@ -180,6 +180,26 @@ const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ??
     const followerAngle = followerRay.angle;
 
     return {angle: followerAngle + leaderAngle, distance: followerRay.distance}
+  }
+
+  /* Will erase all squadron data from all scenes (if parameter == true) or
+   * just the currently viewed scene (if false).
+   */
+  static disband(global = false) {
+
+    if (global) {
+      game.scenes.forEach( (scene) => {
+        warpgate.plugin.queueUpdate( () => { return Logistics._disbandScene(scene) } )
+      });
+    } else {
+      warpgate.plugin.queueUpdate( () => { return Logistics._disbandScene(canvas.scene) });
+    }
+  }
+
+  static _disbandScene(scene) {
+    const tokens = scene.getEmbeddedCollection('Token').filter( token => token.data.flags?.squadron );
+    const updates = tokens.map( (token) => {return { _id: token.id, 'flags.-=squadron':null}});
+    return scene.updateEmbeddedDocuments('Token', updates);
   }
 }
 

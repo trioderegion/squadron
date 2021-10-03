@@ -2,6 +2,7 @@
 
 import { MODULE } from '../module.js'
 import { Lookout } from './lookout.js'
+import { Logistics } from './logistics.js'
 
 const NAME = 'UserInterface';
 
@@ -9,6 +10,13 @@ export class UserInterface {
 
   static register() {
     UserInterface.hooks();
+    UserInterface.globals();
+  }
+
+  static globals() {
+    globalThis.squadron = {
+      disband: Logistics.disband
+    }
   }
 
   static hooks(){

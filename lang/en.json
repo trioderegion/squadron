@@ -13,5 +13,12 @@
   "feedback": {
     "pickAsk": "Please select the leader token for {followerName}",
     "pickConfirm": "{leaderName} is being followed by {followerName}"
+  },
+  "orientation": {
+    "title": "Select formation direction",
+    "up": "Up",
+    "down": "Down",
+    "left": "Left",
+    "right": "Right"
   }
 }
