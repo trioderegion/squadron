@@ -61,6 +61,7 @@ export class UserInterface {
 
   static _stopFollow(followerToken){
     warpgate.plugin.queueUpdate( async () => {
+      Logistics.announceStopFollow(followerToken);
       await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
       await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
       canvas.tokens.hud.render(false);

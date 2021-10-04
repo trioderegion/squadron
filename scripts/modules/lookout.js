@@ -74,24 +74,7 @@ export class Lookout {
     }
 
     /* am I a follower? */
-    const leaders = tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].leadersFlag) ?? {};
-    if (Object.keys(leaders).length > 0){
-
-      logger.debug('Notifying leaders of follower remove. Follower:', tokenDoc, 'Leaders:', leaders);
-      /* notify each leader that one of their followers is being removed */
-      Object.keys(leaders).forEach( (leaderId) => {
-        warpgate.plugin.queueUpdate( () => {
-          return warpgate.event.notify(MODULE[NAME].removeFollowerEvent,
-            {
-              leaderId,
-              followerId: tokenDoc.id,
-              sceneId: tokenDoc.parent.id
-            });
-        });
-
-      });
-
-    }
+    Logistics.announceStopFollow(tokenDoc);
   }
 
   static _preUpdateToken(tokenDoc, update, options, user) {

@@ -125,7 +125,7 @@ export class Logistics {
 
     const updates = data.followers.map( element => Logistics._moveFollower( element, data ) );
     const moves = updates.reduce( (sum, curr) => {
-      if (curr?.stop) return sum;
+      if (curr?.stop ?? true) return sum;
       sum.push(curr);
       return sum
     }, []);
@@ -163,6 +163,27 @@ export class Logistics {
     }
   }
 
+  static announceStopFollow(tokenDoc) {
+
+    const leaders = tokenDoc.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {};
+    if (Object.keys(leaders).length > 0){
+
+      logger.debug('Notifying leaders of follower remove. Follower:', tokenDoc, 'Leaders:', leaders);
+      /* notify each leader that one of their followers is being removed */
+      Object.keys(leaders).forEach( (leaderId) => {
+        warpgate.plugin.queueUpdate( () => {
+          return warpgate.event.notify(MODULE['Lookout'].removeFollowerEvent,
+            {
+              leaderId,
+              followerId: tokenDoc.id,
+              sceneId: tokenDoc.parent.id
+            });
+        });
+
+      });
+
+    }
+  }
 
   static async handleRemoveLeader(eventData) {
     const follower = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.followerId);
