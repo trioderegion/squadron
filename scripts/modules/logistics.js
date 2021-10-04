@@ -4,6 +4,21 @@ import { MODULE } from '../module.js'
 
 
 export class Logistics {
+
+  static register() {
+    this.settings();
+  }
+
+  static settings() {
+    const config = true;
+    const settingsData = {
+      collideWalls : {
+        scope: "world", config, default: false, type: Boolean,
+      },
+    };
+
+    MODULE.applySettings(settingsData);
+  }
   
   static createFollowVector(newLoc, oldLoc) {
 
@@ -76,8 +91,25 @@ export class Logistics {
     }
 
     const {x,y} = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo);
+    
+    let moveInfo = {_id: followerId, x, y, stop: false};
 
-    return {_id: followerId, x,y};
+    /* if we should check for wall collisions, do that here */
+    //Note: we can only check (currently) if the most senior owner is on
+    //      the same scene as the event. 
+    if(MODULE.setting('collideWalls') && canvas.scene.id === data.sceneId) {
+      //get centerpoint offset
+      const offset = {x: token.object.center.x - token.data.x, y: token.object.center.y - token.data.y};
+      moveInfo.stop = Logistics._hasCollision([token.data.x+offset.x, token.data.y+offset.y, x+offset.x, y+offset.y]);
+    }
+
+    return moveInfo;
+  }
+
+  /* checks for wall collision along the array form of a ray */
+  static _hasCollision(points) {
+    const ray = new Ray({x: points[0], y: points[1]}, {x: points[2], y: points[3]});
+    return canvas.walls.checkCollision(ray)
   }
 
   /* unit normal is forward */
@@ -89,16 +121,26 @@ export class Logistics {
   }
 
   /* return {Promise} */
-  static handleLeaderMove(data) {
+  static async handleLeaderMove(data) {
 
-    let updates = data.followers.map( element => Logistics._moveFollower( element, data ) );
-    updates = updates.reduce( (sum, curr) => {
-      if (!curr) return sum;
+    const updates = data.followers.map( element => Logistics._moveFollower( element, data ) );
+    const moves = updates.reduce( (sum, curr) => {
+      if (curr?.stop) return sum;
       sum.push(curr);
       return sum
     }, []);
 
-    return game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', updates, {squadronEvent: MODULE['Lookout'].leaderMoveEvent})
+    const collisions = updates.reduce( (sum, curr) => {
+      if(curr?.stop) {
+        sum.push({_id: curr._id, [`flags.${MODULE.data.name}.paused`]: true})
+        logger.notify(MODULE.format('feedback.wallCollision', {tokenId: curr._id}));
+      }
+      return sum;
+    }, []);
+
+    await game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', collisions, {squadronEvent: MODULE['Lookout'].leaderMoveEvent});
+
+    return game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', moves, {squadronEvent: MODULE['Lookout'].leaderMoveEvent})
   }
 
   static async handleRemoveFollower(eventData) {

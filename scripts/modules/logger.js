@@ -27,6 +27,14 @@ export class logger {
   static info(...args) {
     console.log(`${MODULE?.data?.title || "" }  | `, ...args);
   }
+  
+  // WARPGATE BEGIN
+  static notify(...args) {
+    logger.info(args);
+    ui.notifications.info(`${MODULE?.data?.title || "" } | ${args[0]}`);
+  }
+  // WARPGATE END
+  
   static debug(...args) {
     if (MODULE.setting('debug'))
       this.info("DEBUG | ", ...args);

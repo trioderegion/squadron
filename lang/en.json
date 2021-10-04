@@ -3,6 +3,10 @@
     "debug": {
       "name": "Enable Debug Info",
       "hint": "Logs additional debugging information to the console"
+    },
+    "collideWalls": {
+      "name": "Respect Walls on Follow",
+      "hint": "Will check if the follower would collide with a wall when moving and will temporarily leave formation if this occurs. Reposition and rejoin formation to continue following."
     }
   },
   "workflow": {
@@ -12,7 +16,8 @@
   },
   "feedback": {
     "pickAsk": "Please select the leader token for {followerName}",
-    "pickConfirm": "{leaderName} is being followed by {followerName}"
+    "pickConfirm": "{leaderName} is being followed by {followerName}",
+    "wallCollision": "Follower's movement collides with a wall and has left formation. (Token [{tokenId}])"
   },
   "orientation": {
     "title": "Select formation direction",
