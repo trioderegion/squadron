@@ -1,6 +1,6 @@
 # Squadron
 
-A [Warp Gate](https://github.com/trioderegion/warpgate) pylon for formation, or marching order, management for Foundry VTT.
+A [Warp Gate](https://github.com/trioderegion/warpgate) pylon for formation, or marching order, management for Foundry VTT. Requires Warp Gate v1.7.4 or higher.
 
 Below is a demonstration of Squadron in action.
 
