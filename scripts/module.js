@@ -75,17 +75,17 @@ export class MODULE{
     if (!doc) return false;
 
     /* Any GM 'owns' everything */
-    const gmOwners = Object.entries(doc.data.permission)
-      .filter(([id,level]) => (game.users.get(id)?.isGM && game.users.get(id)?.active))
-      .map(([id, level]) => id);
+    const gmOwners = game.users.filter( user => user.isGM && user.active)
+
+    if(gmOwners.length > 0) return gmOwners[0];
 
     /* users are only owners with permission level 3 */
     const otherOwners = Object.entries(doc.data.permission)
       .filter(([id, level]) => (!game.users.get(id)?.isGM && game.users.get(id)?.active) && level === 3)
       .map(([id, level])=> id);
 
-    if(gmOwners.length > 0) return game.users.get(gmOwners[0]);
-    else return game.users.get(otherOwners[0]);
+
+    return game.users.get(otherOwners[0]);
   }
 
   static isFirstOwner(doc){
