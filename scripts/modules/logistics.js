@@ -90,7 +90,9 @@ export class Logistics {
       followVector = new Ray(followVector.A, followVector.B);
     }
 
-    const {x,y} = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo);
+    /* get follower token size offset (translates center to corner) */
+    const offset = {x: -token.object.w/2, y: -token.object.h/2};
+    const {x,y} = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, offset);
     
     let moveInfo = {_id: followerId, x, y, stop: false};
 
@@ -113,11 +115,11 @@ export class Logistics {
   }
 
   /* unit normal is forward */
-  static _calculateNewPosition(origin, forwardVector, delta){
+  static _calculateNewPosition(origin, forwardVector, delta, offset){
     const {angle, distance} = delta; 
     const offsetAngle = forwardVector.angle;
     const newLocation = Ray.fromAngle(origin.x, origin.y, offsetAngle + angle, distance);
-    return newLocation.B; 
+    return {x: newLocation.B.x + offset.x, y: newLocation.B.y + offset.y}; 
   }
 
   /* return {Promise} */
@@ -218,7 +220,7 @@ export class Logistics {
 
     const leaderAngle = Logistics._computeLeaderAngle(orientationVector);
 
-    const followerDelta = Logistics._calculateFollowerDelta(leaderToken.data, leaderAngle, followerToken.data);
+    const followerDelta = Logistics._calculateFollowerDelta(leaderToken.object.center, leaderAngle, followerToken.object.center);
 
     let currentFollowInfo = duplicate(followerToken.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {});
 

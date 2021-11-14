@@ -80,7 +80,8 @@ export class Lookout {
   static _preUpdateToken(tokenDoc, update, options, user) {
     if (update.x || update.y) {
       /* store 'old' location */
-      mergeObject(options, {oldLoc: {x: tokenDoc.data.x, y: tokenDoc.data.y}});
+      const {x,y} = tokenDoc.object.center;
+      mergeObject(options, {oldLoc: {x,y}});
     }
   }
 
@@ -97,11 +98,7 @@ export class Lookout {
 
         const oldLoc = options.oldLoc;
 
-        const newLoc = {
-          x: update.x ?? tokenDoc.data.x,
-          y: update.y ?? tokenDoc.data.y
-        }
-
+        const newLoc = tokenDoc.object.center;
         const followVector = Logistics.createFollowVector(newLoc, oldLoc)
 
         const data = {
