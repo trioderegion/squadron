@@ -128,43 +128,49 @@ export class Lookout {
 
         /* I am following someone and have moved independently of them -> Pause */
         warpgate.plugin.queueUpdate( async () => {
-          await tokenDoc.setFlag(MODULE.data.name,MODULE[NAME].followPause,true);
+          await Looksout.pause(tokenDoc);
         });
       }
     }
   }
 
-  static async addFollower(leaderId, followerId, sceneId){
+  static async pause(tokenDoc) {
+    await tokenDoc.setFlag(MODULE.data.name,MODULE[NAME].followPause, true);
+  }
 
+  static async addFollower(leaderId, followerId, sceneId, orientation = squadron.CONST.QUERY){
+
+    if (orientation === squadron.CONST.QUERY) {
     /* ask for orientation */
-    const dialogData = {
-      buttons: [{
-        label: MODULE.localize('orientation.left'),
-        value: {x:1, y:0}
-      },{
-        label: MODULE.localize('orientation.up'),
-        value: {x:0, y:-1}
-      },{
-        label: MODULE.localize('orientation.down'),
-        value: {x:0, y:1}
-      },{
-        label: MODULE.localize('orientation.right'),
-        value: {x:-1, y:0}
-      }],
-      title: MODULE.localize('orientation.title')
+      const dialogData = {
+        buttons: [{
+          label: MODULE.localize('orientation.left'),
+          value: squadron.CONST.LEFT,
+        },{
+          label: MODULE.localize('orientation.up'),
+          value: squadron.CONST.UP,
+        },{
+          label: MODULE.localize('orientation.down'),
+          value: squadron.CONST.DOWN,
+        },{
+          label: MODULE.localize('orientation.right'),
+          value: squadron.CONST.RIGHT,
+        }],
+        title: MODULE.localize('orientation.title')
+      }
+
+      orientation = await warpgate.buttonDialog(dialogData);
     }
 
-    const orientationVector = await warpgate.buttonDialog(dialogData);
-
     /* dialog was cancelled */
-    if (orientationVector === true) return;
-    logger.debug('Behind vector', orientationVector);
+    if (orientation === true) return;
+    logger.debug('Behind vector', orientation);
 
     const eventData = {
       leaderId,
       followerId,
       sceneId,
-      orientationVector //leader does not care about this
+      orientationVector: orientation //leader does not care about this
     }
 
     /* trigger all relevant events */

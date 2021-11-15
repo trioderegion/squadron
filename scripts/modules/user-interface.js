@@ -10,13 +10,6 @@ export class UserInterface {
 
   static register() {
     UserInterface.hooks();
-    UserInterface.globals();
-  }
-
-  static globals() {
-    globalThis.squadron = {
-      disband: Logistics.disband
-    }
   }
 
   static hooks(){
@@ -59,20 +52,28 @@ export class UserInterface {
     html.find(column).append(button);
   }
 
+  static async stop(followerToken) {
+    Logistics.announceStopFollow(followerToken);
+    await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
+    canvas.tokens.hud.render(false);
+  }
+
+  static async resume(followerToken) {
+    await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
+    canvas.tokens.hud.render(false);
+  }
+
   static _stopFollow(followerToken){
     warpgate.plugin.queueUpdate( async () => {
-      Logistics.announceStopFollow(followerToken);
-      await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
-      await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
-      canvas.tokens.hud.render(false);
+      await UserInterface.stop(followerToken);
     });
   }
 
   static _resumeFollow(followerToken){
 
     warpgate.plugin.queueUpdate( async () => {
-      await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
-      canvas.tokens.hud.render(false);
+      await UserInterface.resume(followerToken);
     });
   }
 

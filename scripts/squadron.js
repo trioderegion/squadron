@@ -1,4 +1,3 @@
-// Module specific code goes here. See https://foundryvtt.com/article/module-development/ for help.
 /*
  * MIT License
  * 
@@ -27,26 +26,30 @@ import { logger } from './modules/logger.js';
 import { UserInterface } from './modules/user-interface.js'
 import { Lookout } from './modules/lookout.js'
 import { Logistics } from './modules/logistics.js'
+import { api } from './modules/api.js'
 
-const SUB_MODULES = {
-  MODULE,
-  UserInterface,
-  Lookout,
-  Logistics,
-  logger,
-}
+( async () => {
+  const SUB_MODULES = {
+    MODULE,
+    UserInterface,
+    Lookout,
+    Logistics,
+    api,
+    logger,
+  }
 
-/*
+  /*
   Initialize Module
-*/
-MODULE.build();
+  */
+  await MODULE.build();
 
-/*
+  /*
   Initialize all Sub Modules
-*/
-Hooks.on(`setup`, () => {
-  Object.values(SUB_MODULES).forEach(cl => cl.register());
+  */
+  Hooks.on(`setup`, () => {
+    Object.values(SUB_MODULES).forEach(cl => cl.register());
 
-  //GlobalTesting
-  //Object.entries(SUB_MODULES).forEach(([key, cl])=> window[key] = cl);
-});
+    //GlobalTesting
+    //Object.entries(SUB_MODULES).forEach(([key, cl])=> window[key] = cl);
+  });
+})();
