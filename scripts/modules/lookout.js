@@ -2,6 +2,7 @@
 import { MODULE } from '../module.js'
 import { Logistics } from './logistics.js'
 import { logger } from './logger.js'
+import { UserInterface } from './user-interface.js'
 
 const NAME = 'Lookout';
 
@@ -29,6 +30,8 @@ export class Lookout {
       warpgate.event.watch(MODULE[NAME].removeFollowerEvent, Logistics.handleRemoveFollower, Logistics.leaderFirstOwner);
 
       warpgate.event.watch(MODULE[NAME].removeLeaderEvent, Logistics.handleRemoveLeader, Logistics.followerFirstOwner);
+
+      warpgate.event.watch(MODULE[NAME].notifyCollision, UserInterface.notifyCollision, (data) => {return data.user == game.user.id})
     });
   }
 
@@ -40,9 +43,11 @@ export class Lookout {
       addLeaderEvent: 'sq-add-leader',
       removeFollowerEvent: 'sq-remove-follower',
       removeLeaderEvent: 'sq-remove-leader',
+      notifyCollision: 'sq-notify-collision',
       followersFlag: 'followers',
       leadersFlag: 'leaders',
       followPause: 'paused',
+      lastUser: 'user',
     }
   }
 
@@ -128,7 +133,7 @@ export class Lookout {
 
         /* I am following someone and have moved independently of them -> Pause */
         warpgate.plugin.queueUpdate( async () => {
-          await Looksout.pause(tokenDoc);
+          await Lookout.pause(tokenDoc);
         });
       }
     }
@@ -170,7 +175,8 @@ export class Lookout {
       leaderId,
       followerId,
       sceneId,
-      orientationVector: orientation //leader does not care about this
+      orientationVector: orientation, //leader does not care about this
+      initiator: game.user.id //for informing user of things
     }
 
     /* trigger all relevant events */

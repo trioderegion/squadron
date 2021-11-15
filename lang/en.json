@@ -17,7 +17,7 @@
   "feedback": {
     "pickAsk": "Please select the leader token for {followerName}",
     "pickConfirm": "{leaderName} is being followed by {followerName}",
-    "wallCollision": "Follower's movement collides with a wall and has left formation. (Token [{tokenId}])"
+    "wallCollision": "{tokenName}'s movement collides with a wall and has left formation. (Token [{tokenId}])"
   },
   "orientation": {
     "title": "Select formation direction",

@@ -3,6 +3,7 @@
 import { MODULE } from '../module.js'
 import { Lookout } from './lookout.js'
 import { Logistics } from './logistics.js'
+import { logger } from './logger.js'
 
 const NAME = 'UserInterface';
 
@@ -40,6 +41,11 @@ export class UserInterface {
     }
   }
 
+  /* eventData: {tokenId, tokenName, user} */
+  static notifyCollision(eventData) {
+    logger.notify(MODULE.format('feedback.wallCollision', {tokenId: eventData.tokenId, tokenName: eventData.tokenName}));
+  }
+
   static _addHudButton(html, selectedToken, title, icon, clickEvent) {
 
     if (!selectedToken) return;
@@ -54,8 +60,9 @@ export class UserInterface {
 
   static async stop(followerToken) {
     Logistics.announceStopFollow(followerToken);
-    await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
-    await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
+    await followerToken.update({'flags.-=squadron': null});
+    //await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    //await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
     canvas.tokens.hud.render(false);
   }
 

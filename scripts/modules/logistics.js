@@ -90,11 +90,14 @@ export class Logistics {
       followVector = new Ray(followVector.A, followVector.B);
     }
 
+    /* record last user in case of collision */
+    const user = token.getFlag(MODULE.data.name, MODULE['Lookout']?.lastUser) ?? {};
+
     /* get follower token size offset (translates center to corner) */
     const offset = {x: -token.object.w/2, y: -token.object.h/2};
     const {x,y} = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, offset);
     
-    let moveInfo = {_id: followerId, x, y, stop: false};
+    let moveInfo = {_id: followerId, x, y, stop: false, user, name: token.name};
 
     /* if we should check for wall collisions, do that here */
     //Note: we can only check (currently) if the most senior owner is on
@@ -103,6 +106,7 @@ export class Logistics {
       //get centerpoint offset
       const offset = {x: token.object.center.x - token.data.x, y: token.object.center.y - token.data.y};
       moveInfo.stop = Logistics._hasCollision([token.data.x+offset.x, token.data.y+offset.y, x+offset.x, y+offset.y]);
+      
     }
 
     return moveInfo;
@@ -135,7 +139,8 @@ export class Logistics {
     const collisions = updates.reduce( (sum, curr) => {
       if(curr?.stop) {
         sum.push({_id: curr._id, [`flags.${MODULE.data.name}.paused`]: true})
-        logger.notify(MODULE.format('feedback.wallCollision', {tokenId: curr._id}));
+        warpgate.event.notify(MODULE['Lookout'].notifyCollision, {tokenId: curr._id, tokenName: curr.name, user: curr.user} )
+        //logger.notify(MODULE.format('feedback.wallCollision', {tokenId: curr._id}));
       }
       return sum;
     }, []);
@@ -211,7 +216,7 @@ export class Logistics {
   }
 
   static async handleAddLeader(eventData) {
-    const {leaderId, followerId, sceneId, orientationVector} = eventData;
+    const {leaderId, followerId, sceneId, orientationVector, initiator} = eventData;
 
     const scene = game.scenes.get(sceneId);
 
@@ -227,9 +232,18 @@ export class Logistics {
     /* stamp in our new data */
     currentFollowInfo[leaderId] = followerDelta;
 
+    const squadron = {
+      [MODULE['Lookout'].leadersFlag] : currentFollowInfo,
+      [MODULE['Lookout'].followPause]: false,
+      [MODULE['Lookout'].lastUser]: initiator
+
+    }
+
     /* store the data */
-    await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag, currentFollowInfo);
-    await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
+    await followerToken.update({'flags': {squadron}});
+    //await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag, currentFollowInfo);
+    //await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
+    //await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].lastUser, initiator);
 
   }
 
