@@ -36,8 +36,15 @@ If a token that is currently in formation or following a leader moves on its own
 
 For example, if a group is in formation crawling through a dungeon and enters a room, it is likely that each member of the group will go off and search or investigate their own thing. Once the room as been cleared of monsters or searched, and the group is ready to move on, each follower will simply click Rejoin Formation and will fall back in line with their Leader in the previous formation.
 
+## API
+
+### `async squadron.follow(leaderId, followerId, sceneId, orientation = squadron.CONST.QUERY)`
+### `async squadron.stop(tokenDocument)`
+### `async squadron.pause(tokenDocument)`
+### `async squadron.resume(tokenDocument)`
+
 ## Troubleshooting Utilities
 
-Included with Squadron is a single API command, `squadron.disband` that will remove ALL squadron data from tokens on the current scene (default) or on ALL scenes with `squadron.disband(true)`. In the unlikely event that Squadron breaks down, garbage follower/leader data may be left on tokens and can be removed using this command.
+Included with Squadron is `squadron.disband`, which will remove ALL squadron data from tokens on the current scene (default) or on ALL scenes with `squadron.disband(true)`. In the unlikely event that Squadron breaks down, garbage follower/leader data may be left on tokens and can be removed using this command.
 
 
