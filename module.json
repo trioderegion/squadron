@@ -4,7 +4,7 @@
   "description": "Quickly create marching orders or formations for your tokens. Easy jump in and out of your formation or halt others from following you.",
   "version": "0.1.0",
   "minimumCoreVersion": "0.8.6",
-  "compatibleCoreVersion": "0.8.9",
+  "compatibleCoreVersion": "9",
   "author": "honeybadger",
   "authors": [
     {
