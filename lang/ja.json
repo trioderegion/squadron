@@ -1,0 +1,29 @@
+{
+  "setting": {
+    "debug": {
+      "name": "デバッグ有効",
+      "hint": "コンソールに追加のデバッグ情報を表示"
+    },
+    "collideWalls": {
+      "name": "壁の衝突判定",
+      "hint": "従者が移動する時、途中に壁があるかどうかを判定し、衝突する場合は一時的に陣形を離脱し停止します。追従を再び有効にするには位置を変えてから陣形に戻してください。"
+    }
+  },
+  "workflow": {
+    "pick": "リーダー選択",
+    "rejoin": "陣形に戻る",
+    "leave": "陣形を離脱する"
+  },
+  "feedback": {
+    "pickAsk": "{followerName}が追従するコマを選択してください。",
+    "pickConfirm": "{leaderName}は{followerName}に追従されています。",
+    "wallCollision": "{tokenName}の移動が壁に衝突しましたので一時的に陣形を離脱しました。（コマ[{tokenId}]）"
+  },
+  "orientation": {
+    "title": "陣形の方向を選択してください。",
+    "up": "上",
+    "down": "下",
+    "left": "左",
+    "right": "右"
+  }
+}
