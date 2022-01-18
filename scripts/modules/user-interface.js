@@ -21,23 +21,28 @@ export class UserInterface {
     const token = app?.object?.document;
     if (!token) return;
 
+    const allSelected = (fn) => {
+      (canvas.tokens.controlled ?? [{document: token}]).forEach( selected => fn(selected.document) );
+    }
+
     /* which button should we show? */
     const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
     if (paused) {
 
       /* we are following, but have paused */
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.rejoin'), 'fa-sitemap', 
-        (event)=>{ UserInterface._resumeFollow(token)});
+        (event)=>{ allSelected(UserInterface._resumeFollow)});
     } else if (paused === undefined) {
 
       /* if the pause flag doesnt exist, we arent following anyone */
+      /* special handling of multi-selected for this one, dont use helper */
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.pick'), 'fa-users',
         (event) => { UserInterface._targetLeader(token)})
     } else {
 
       /* otherwise, we are following normally and have the option to stop */
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.leave'), 'fa-users-slash', 
-        (event)=>{ UserInterface._stopFollow(token)});
+        (event)=>{ allSelected(UserInterface._stopFollow)});
     }
   }
 
@@ -61,8 +66,6 @@ export class UserInterface {
   static async stop(followerToken) {
     Logistics.announceStopFollow(followerToken);
     await followerToken.update({'flags.-=squadron': null});
-    //await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
-    //await followerToken.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
     canvas.tokens.hud.render(false);
   }
 
@@ -104,7 +107,16 @@ export class UserInterface {
       const confirmInfo = MODULE.format('feedback.pickConfirm', {leaderName: token.name, followerName: followerToken.name})
       ui.notifications.info(confirmInfo);
 
-      await Lookout.addFollower(token.id, followerToken.id, followerToken.parent.id);
+      let eventData = {
+        orientationVector: squadron.CONST.QUERY,
+        locks: {planar: false, elevation:  true}
+      };
+
+      for (const selected of canvas.tokens.controlled) {
+        if (!eventData) break;
+        eventData = await Lookout.addFollower(token.id, selected.id, followerToken.parent.id,
+          eventData.orientationVector, eventData.locks )
+      }
       game.users.get(user.id).broadcastActivity({targets: []})
       game.user.updateTokenTargets();
 

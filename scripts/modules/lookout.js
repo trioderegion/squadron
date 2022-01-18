@@ -159,18 +159,23 @@ export class Lookout {
     await tokenDoc.setFlag(MODULE.data.name,MODULE[NAME].followPause, true);
   }
 
-  static async addFollower(leaderId, followerId, sceneId, orientation = squadron.CONST.QUERY){
+  static async addFollower(leaderId, followerId, sceneId, 
+    orientation = squadron.CONST.QUERY,
+    {planar = false, elevation = true} = {}) {
 
+    /* define default result based on inputs */
+    let result = {buttons: orientation, inputs: [planar, elevation]}
     if (orientation === squadron.CONST.QUERY) {
-    /* ask for orientation */
+      /* ask for orientation */
       const dialogData = {
         inputs: [{
           type: 'checkbox',
-          label: MODULE.localize('orientation.lockXy')
+          label: MODULE.localize('orientation.lockXy'),
+          options: planar ?? false
         },{
           type: 'checkbox',
           label: MODULE.localize('orientation.lockElevation'),
-          options: true
+          options: elevation ?? true
         }],
         buttons: [{
           label: MODULE.localize('orientation.left'),
@@ -187,21 +192,21 @@ export class Lookout {
         }],
       }
 
-      orientation = await warpgate.menu(dialogData,{title: MODULE.localize('orientation.title')})
+      result = await warpgate.menu(dialogData,{title: MODULE.localize('orientation.title')})
     }
 
     /* dialog was cancelled */
-    if (orientation.buttons === false) return;
-    logger.debug('Behind vector', orientation);
+    if (result.buttons === false) return false;
+    logger.debug('Behind vector', result);
 
     const eventData = {
       leaderId,
       followerId,
       sceneId,
-      orientationVector: orientation.buttons, //leader does not care about this
+      orientationVector: result.buttons, //leader does not care about this
       locks: {
-        planar: orientation.inputs[0],
-        elevation: orientation.inputs[1]
+        planar: result.inputs[0],
+        elevation: result.inputs[1]
       },
       initiator: game.user.id //for informing user of things
     }
@@ -209,5 +214,7 @@ export class Lookout {
     /* trigger all relevant events */
     await warpgate.event.notify(MODULE[NAME].addFollowerEvent, eventData);
     await warpgate.event.notify(MODULE[NAME].addLeaderEvent, eventData);
+
+    return eventData
   }
 }

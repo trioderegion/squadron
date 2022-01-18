@@ -112,16 +112,20 @@ export class Logistics {
     /* get follower token size offset (translates center to corner) */
     const offset = {x: -token.object.w/2, y: -token.object.h/2, z: 0};
     let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset);
+    mergeObject(position, {x: token.data.x, y: token.data.y}, {overwrite: false});
 
     /* snap to the grid if any. its confusing to be following off grid */
-    position = canvas.grid.getSnappedPosition(position.x, position.y);
+    mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
+
+    /* check if we have moved -- i.e. on the 2d canvas */
+    const isMove = position.x != token.data.x || position.y != token.data.y
 
     let moveInfo = {update: {_id: followerId, ...position}, stop: false, user, name: token.name};
 
     /* if we should check for wall collisions, do that here */
     //Note: we can only check (currently) if the most senior owner is on
     //      the same scene as the event. 
-    if(MODULE.setting('collideWalls') && canvas.scene.id === data.sceneId) {
+    if(MODULE.setting('collideWalls') && canvas.scene.id === data.sceneId && isMove) {
       //get centerpoint offset
       const offset = {x: token.object.center.x - token.data.x, y: token.object.center.y - token.data.y};
       moveInfo.stop = Logistics._hasCollision([token.data.x+offset.x, token.data.y+offset.y, moveInfo.update.x+offset.x, moveInfo.update.y+offset.y]);
@@ -150,8 +154,10 @@ export class Logistics {
     let pos = {};
 
     //always give a xy
-    pos.x = newLocation.B.x + offset.x;
-    pos.y = newLocation.B.y + offset.y;
+    if (forwardVector.dx || forwardVector.dy){
+      pos.x = newLocation.B.x + offset.x;
+      pos.y = newLocation.B.y + offset.y;
+    }
 
     if (forwardVector.dz) {
       pos.elevation = locks.elevation ? origin.z + dz : forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
