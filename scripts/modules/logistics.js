@@ -111,8 +111,11 @@ export class Logistics {
 
     /* get follower token size offset (translates center to corner) */
     const offset = {x: -token.object.w/2, y: -token.object.h/2, z: 0};
-    const position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset);
-    
+    let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset);
+
+    /* snap to the grid if any. its confusing to be following off grid */
+    position = canvas.grid.getSnappedPosition(position.x, position.y);
+
     let moveInfo = {update: {_id: followerId, ...position}, stop: false, user, name: token.name};
 
     /* if we should check for wall collisions, do that here */
@@ -145,12 +148,10 @@ export class Logistics {
     const newLocation = Ray.fromAngle(origin.x, origin.y, finalAngle, distance);
 
     let pos = {};
-    
 
-    //if (forwardVector.dx || forwardVector.dy) {
-      pos.x = newLocation.B.x + offset.x;
-      pos.y = newLocation.B.y + offset.y;
-    //}
+    //always give a xy
+    pos.x = newLocation.B.x + offset.x;
+    pos.y = newLocation.B.y + offset.y;
 
     if (forwardVector.dz) {
       pos.elevation = locks.elevation ? origin.z + dz : forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
