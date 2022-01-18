@@ -1,7 +1,23 @@
 import { logger } from './logger.js'
 import { MODULE } from '../module.js'
 
+class FollowVector extends Ray {
+  constructor( A, B ) {
+    super( A, B );
 
+    /**
+     * The origin z-coordinate
+     * @type {number}
+     */
+    this.z0 = A.z;
+
+    /**
+     * The "up" distance of the ray, z1 - z0
+     * @type {number}
+     */
+    this.dz = B.z - A.z;
+  }
+}
 
 export class Logistics {
 
@@ -25,7 +41,7 @@ export class Logistics {
     /* vector is defined as origin at new location
      * pointing towards oldLoc
      */
-    const vector = new Ray(newLoc, oldLoc);
+    const vector = new FollowVector(newLoc, oldLoc);
     logger.debug('Follow Vector', vector);
     return vector;
   }
@@ -49,12 +65,12 @@ export class Logistics {
 
   static leaderFirstOwner(eventData) {
     const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
-    return MODULE.isFirstOwner(leader.actor);
+    return MODULE.isFirstOwner(leader?.actor);
   }
 
   static followerFirstOwner(eventData) {
     const follower = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.followerId);
-    return MODULE.isFirstOwner(follower.actor);
+    return MODULE.isFirstOwner(follower?.actor);
   }
 
   /* followerData[leaderId]={angle,distance}}
@@ -65,7 +81,7 @@ export class Logistics {
 
     /* only handle *ours* no matter what anybody says */
     const token = game.scenes.get(data.sceneId).getEmbeddedDocument("Token", followerId);
-    if (!token || !MODULE.isFirstOwner(token.actor)) return;
+    if (!token || !MODULE.isFirstOwner(token?.actor)) return;
 
     const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
 
@@ -74,7 +90,7 @@ export class Logistics {
     /* get our follower information */
     const followerData = token.getFlag(MODULE.data.name, MODULE['Lookout']?.leadersFlag) ?? {};
 
-    const deltaInfo = followerData[data.leader.tokenId];
+    const {delta: deltaInfo, locks} = followerData[data.leader.tokenId];
 
     /* null delta means the leader thinks we are following, but are not */
     if (!deltaInfo){
@@ -85,19 +101,22 @@ export class Logistics {
     /* from follow vector, calculate our new position */
     let {followVector, finalPosition} = data.leader;
 
-    if ( typeof followVector !== "Ray" ){
+    if ( typeof followVector !== "FollowVector" ){
       /* this was serialized from another client */
-      followVector = new Ray(followVector.A, followVector.B);
+      followVector = new FollowVector(followVector.A, followVector.B);
     }
 
     /* record last user in case of collision */
     const user = token.getFlag(MODULE.data.name, MODULE['Lookout']?.lastUser) ?? {};
 
     /* get follower token size offset (translates center to corner) */
-    const offset = {x: -token.object.w/2, y: -token.object.h/2};
-    const {x,y} = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, offset);
-    
-    let moveInfo = {_id: followerId, x, y, stop: false, user, name: token.name};
+    const offset = {x: -token.object.w/2, y: -token.object.h/2, z: 0};
+    let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset);
+
+    /* snap to the grid if any. its confusing to be following off grid */
+    position = canvas.grid.getSnappedPosition(position.x, position.y);
+
+    let moveInfo = {update: {_id: followerId, ...position}, stop: false, user, name: token.name};
 
     /* if we should check for wall collisions, do that here */
     //Note: we can only check (currently) if the most senior owner is on
@@ -105,7 +124,7 @@ export class Logistics {
     if(MODULE.setting('collideWalls') && canvas.scene.id === data.sceneId) {
       //get centerpoint offset
       const offset = {x: token.object.center.x - token.data.x, y: token.object.center.y - token.data.y};
-      moveInfo.stop = Logistics._hasCollision([token.data.x+offset.x, token.data.y+offset.y, x+offset.x, y+offset.y]);
+      moveInfo.stop = Logistics._hasCollision([token.data.x+offset.x, token.data.y+offset.y, moveInfo.update.x+offset.x, moveInfo.update.y+offset.y]);
       
     }
 
@@ -119,11 +138,26 @@ export class Logistics {
   }
 
   /* unit normal is forward */
-  static _calculateNewPosition(origin, forwardVector, delta, offset){
-    const {angle, distance} = delta; 
+  static _calculateNewPosition(origin, forwardVector, delta, locks, offset){
+    const {angle, distance, dz, orientation} = delta; 
     const offsetAngle = forwardVector.angle;
-    const newLocation = Ray.fromAngle(origin.x, origin.y, offsetAngle + angle, distance);
-    return {x: newLocation.B.x + offset.x, y: newLocation.B.y + offset.y}; 
+
+    /* if planar locked preserve initial orientation */
+    const finalAngle = locks.planar ? (new Ray({x:0,y:0}, orientation)).angle + angle : offsetAngle + angle;
+
+    const newLocation = Ray.fromAngle(origin.x, origin.y, finalAngle, distance);
+
+    let pos = {};
+
+    //always give a xy
+    pos.x = newLocation.B.x + offset.x;
+    pos.y = newLocation.B.y + offset.y;
+
+    if (forwardVector.dz) {
+      pos.elevation = locks.elevation ? origin.z + dz : forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
+    }
+
+    return pos;
   }
 
   /* return {Promise} */
@@ -132,18 +166,22 @@ export class Logistics {
     const updates = data.followers.map( element => Logistics._moveFollower( element, data ) );
     const moves = updates.reduce( (sum, curr) => {
       if (curr?.stop ?? true) return sum;
-      sum.push(curr);
+      sum.push(curr.update);
       return sum
     }, []);
 
-    const collisions = updates.reduce( (sum, curr) => {
+    let collisions = [];
+
+    for (const curr of updates) {
       if(curr?.stop) {
-        sum.push({_id: curr._id, [`flags.${MODULE.data.name}.paused`]: true})
-        warpgate.event.notify(MODULE['Lookout'].notifyCollision, {tokenId: curr._id, tokenName: curr.name, user: curr.user} )
-        //logger.notify(MODULE.format('feedback.wallCollision', {tokenId: curr._id}));
+        collisions.push({_id: curr.update._id, [`flags.${MODULE.data.name}.paused`]: true})
+
+        /* notify initiating owner of collision */
+        warpgate.event.notify(MODULE['Lookout'].notifyCollision, {tokenId: curr.update._id, tokenName: curr.name, user: curr.user} )
       }
-      return sum;
-    }, []);
+    }
+    
+    logger.debug('moves', moves, 'collisions', collisions);
 
     await game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', collisions, {squadronEvent: MODULE['Lookout'].leaderMoveEvent});
 
@@ -216,35 +254,28 @@ export class Logistics {
   }
 
   static async handleAddLeader(eventData) {
-    const {leaderId, followerId, sceneId, orientationVector, initiator} = eventData;
+    const {leaderId, followerId, sceneId, orientationVector, locks, initiator} = eventData;
 
     const scene = game.scenes.get(sceneId);
 
     const leaderToken = scene.getEmbeddedDocument('Token', leaderId);
     let followerToken = scene.getEmbeddedDocument('Token', followerId);
 
-    const leaderAngle = Logistics._computeLeaderAngle(orientationVector);
-
-    const followerDelta = Logistics._calculateFollowerDelta(leaderToken.object.center, leaderAngle, followerToken.object.center);
+    const followerDelta = Logistics._calculateFollowerDelta(leaderToken.object, orientationVector, followerToken.object);
 
     let currentFollowInfo = duplicate(followerToken.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {});
 
     /* stamp in our new data */
-    currentFollowInfo[leaderId] = followerDelta;
+    currentFollowInfo[leaderId] = { delta: followerDelta, locks };
 
     const squadron = {
       [MODULE['Lookout'].leadersFlag] : currentFollowInfo,
       [MODULE['Lookout'].followPause]: false,
       [MODULE['Lookout'].lastUser]: initiator
-
     }
 
     /* store the data */
     await followerToken.update({'flags': {squadron}});
-    //await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag, currentFollowInfo);
-    //await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
-    //await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].lastUser, initiator);
-
   }
 
   static _computeLeaderAngle(orientationVector) {
@@ -252,13 +283,15 @@ export class Logistics {
     return ray.angle;
   }
 
-  static _calculateFollowerDelta(leaderPos, leaderAngle, followerPos){
+  static _calculateFollowerDelta(leaderPlaceable, orientationVector, followerPlaceable){
     
-    const followerVector = {x: followerPos.x - leaderPos.x, y: followerPos.y - leaderPos.y};
+    const leaderAngle = Logistics._computeLeaderAngle(orientationVector);
+
+    const followerVector = {x: followerPlaceable.x - leaderPlaceable.x, y: followerPlaceable.y - leaderPlaceable.y};
     const followerRay = new Ray({x:0, y:0}, followerVector);
     const followerAngle = followerRay.angle;
 
-    return {angle: followerAngle + leaderAngle, distance: followerRay.distance}
+    return {angle: followerAngle + leaderAngle, distance: followerRay.distance, dz: followerPlaceable.data.elevation - leaderPlaceable.data.elevation, orientation: orientationVector}
   }
 
   /* Will erase all squadron data from all scenes (if parameter == true) or
