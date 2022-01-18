@@ -82,11 +82,26 @@ export class Lookout {
     Logistics.announceStopFollow(tokenDoc);
   }
 
+  static _shouldTrack(change){
+    return typeof change.x === 'number' ||
+           typeof change.y === 'number' ||
+           typeof change.elevation === 'number';
+  }
+
+  static _getLocation(tokenDoc){
+      return {
+        ...tokenDoc.object.center,
+        z: tokenDoc.data.elevation
+      }
+  }
+
   static _preUpdateToken(tokenDoc, update, options, user) {
-    if (update.x || update.y) {
+    if (Lookout._shouldTrack(update)) {
       /* store 'old' location */
-      const {x,y} = tokenDoc.object.center;
-      mergeObject(options, {oldLoc: {x,y}});
+
+      const oldLoc = Lookout._getLocation(tokenDoc); 
+
+      mergeObject(options, {oldLoc});
     }
   }
 
@@ -95,7 +110,7 @@ export class Lookout {
     /* only handle our initiated moves */
     if (user != game.user.id) return;
     
-    if (update.x || update.y) {
+    if (Lookout._shouldTrack(update)) {
 
       /* am I a leader? */
       const followers = tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].followersFlag) ?? []
@@ -103,7 +118,8 @@ export class Lookout {
 
         const oldLoc = options.oldLoc;
 
-        const newLoc = tokenDoc.object.center;
+        const newLoc = Lookout._getLocation(tokenDoc);
+
         const followVector = Logistics.createFollowVector(newLoc, oldLoc)
 
         const data = {
@@ -148,6 +164,14 @@ export class Lookout {
     if (orientation === squadron.CONST.QUERY) {
     /* ask for orientation */
       const dialogData = {
+        inputs: [{
+          type: 'checkbox',
+          label: MODULE.localize('orientation.lockXy')
+        },{
+          type: 'checkbox',
+          label: MODULE.localize('orientation.lockElevation'),
+          options: true
+        }],
         buttons: [{
           label: MODULE.localize('orientation.left'),
           value: squadron.CONST.LEFT,
@@ -161,21 +185,24 @@ export class Lookout {
           label: MODULE.localize('orientation.right'),
           value: squadron.CONST.RIGHT,
         }],
-        title: MODULE.localize('orientation.title')
       }
 
-      orientation = await warpgate.buttonDialog(dialogData);
+      orientation = await warpgate.menu(dialogData,{title: MODULE.localize('orientation.title')})
     }
 
     /* dialog was cancelled */
-    if (orientation === true) return;
+    if (orientation.buttons === false) return;
     logger.debug('Behind vector', orientation);
 
     const eventData = {
       leaderId,
       followerId,
       sceneId,
-      orientationVector: orientation, //leader does not care about this
+      orientationVector: orientation.buttons, //leader does not care about this
+      locks: {
+        planar: orientation.inputs[0],
+        elevation: orientation.inputs[1]
+      },
       initiator: game.user.id //for informing user of things
     }
 
