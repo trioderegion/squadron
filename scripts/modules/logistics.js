@@ -114,8 +114,10 @@ export class Logistics {
     let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset);
     mergeObject(position, {x: token.data.x, y: token.data.y}, {overwrite: false});
 
-    /* snap to the grid if any. its confusing to be following off grid */
-    mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
+    /* snap to the grid if requested.*/
+    if (data.snap) {
+      mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
+    }
 
     /* check if we have moved -- i.e. on the 2d canvas */
     const isMove = position.x != token.data.x || position.y != token.data.y
@@ -153,12 +155,13 @@ export class Logistics {
 
     let pos = {};
 
-    //always give a xy
+    // give x/y if any 2d movement occured
     if (forwardVector.dx || forwardVector.dy){
       pos.x = newLocation.B.x + offset.x;
       pos.y = newLocation.B.y + offset.y;
     }
 
+    //give elevation update only if elevation changed
     if (forwardVector.dz) {
       pos.elevation = locks.elevation ? origin.z + dz : forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
     }

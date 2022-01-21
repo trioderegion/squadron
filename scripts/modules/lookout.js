@@ -170,12 +170,11 @@ export class Lookout {
       const dialogData = {
         inputs: [{
           type: 'checkbox',
-          label: MODULE.localize('orientation.lockXy'),
-          options: planar ?? false
-        },{
-          type: 'checkbox',
           label: MODULE.localize('orientation.lockElevation'),
           options: elevation ?? true
+        },{
+          type: 'checkbox',
+          label: MODULE.localize('orientation.snap')
         }],
         buttons: [{
           label: MODULE.localize('orientation.left'),
@@ -189,6 +188,9 @@ export class Lookout {
         },{
           label: MODULE.localize('orientation.right'),
           value: squadron.CONST.RIGHT,
+        },{
+          label: MODULE.localize('orientation.none'),
+          value: squadron.CONST.NONE,
         }],
       }
 
@@ -204,9 +206,10 @@ export class Lookout {
       followerId,
       sceneId,
       orientationVector: result.buttons, //leader does not care about this
+      snap: result.inputs[1],
       locks: {
-        planar: result.inputs[0],
-        elevation: result.inputs[1]
+        planar: result.buttons.none ?? false,
+        elevation: result.inputs[0]
       },
       initiator: game.user.id //for informing user of things
     }

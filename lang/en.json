@@ -21,6 +21,9 @@
   },
   "orientation": {
     "title": "Select formation direction",
+    "snapLabel": "Snap to Grid",
+    "lockElevation": "Lock Elevation",
+    "none": "None",
     "up": "Up",
     "down": "Down",
     "left": "Left",
