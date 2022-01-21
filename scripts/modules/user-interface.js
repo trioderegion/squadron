@@ -10,14 +10,26 @@ const NAME = 'UserInterface';
 export class UserInterface {
 
   static register() {
-    UserInterface.hooks();
+    this.settings();
+    this.hooks();
+  }
+
+  static settings() {
+    const config = true;
+    const settingsData = {
+      useCrosshairs: {
+        scope: "world", config, default: true, type: Boolean
+      }
+    }
+
+    MODULE.applySettings(settingsData);
   }
 
   static hooks(){
     Hooks.on('renderTokenHUD', UserInterface._renderTokenHUD);
   }
 
-  static _renderTokenHUD(app, html, data){
+  static _renderTokenHUD(app, html/*, data*/){
     const token = app?.object?.document;
     if (!token) return;
 
@@ -87,13 +99,8 @@ export class UserInterface {
     });
   }
 
-  /* UI Controls for switching to targeting,
-   * marking the leader, and notifying
-   */
-  static _targetLeader(followerToken) {
-
-    const hud = followerToken.layer.hud;
-
+  static _toolTarget(followerToken) {
+    /* use targeting tool */
     const onTarget = async (user, token, active) => {
       if(!active || user.id !== game.user.id){
         /* we are deslecting something, keep ourselves active
@@ -103,31 +110,17 @@ export class UserInterface {
         return;
       }
 
-      /* confirmation info */
-      const confirmInfo = MODULE.format('feedback.pickConfirm', {leaderName: token.name, followerName: followerToken.name})
-      ui.notifications.info(confirmInfo);
+      const eventData = await UserInterface._queryOrientationAndFollow(token, followerToken, true); 
 
-      let eventData = {
-        orientationVector: squadron.CONST.QUERY,
-        locks: {planar: false, elevation:  true}
-      };
-
-      for (const selected of canvas.tokens.controlled) {
-        if (!eventData) break;
-        eventData = await Lookout.addFollower(token.id, selected.id, followerToken.parent.id,
-          eventData.orientationVector, eventData.locks )
-      }
+      /* remove targets */
       game.users.get(user.id).broadcastActivity({targets: []})
       game.user.updateTokenTargets();
 
       /* switch back to select */
       UserInterface._activateTool(canvas.tokens, 'select');  
-      
-      /* leave the hud turned off to hide the race condition?
-       * that causes the hud to update on target
-       */
-      //hud.bind(followerToken.object);
-    };
+
+      return eventData;
+    }
 
     /* register our target hook */
     Hooks.once('targetToken', onTarget);
@@ -135,11 +128,95 @@ export class UserInterface {
     /* switch to targeting mode */
     UserInterface._activateTool(canvas.tokens, 'target');
 
+  }
+
+  static async _crosshairsTarget(followerToken){
+
+    let targetToken = null;
+    while (!targetToken) {
+      const result = await warpgate.crosshairs.show({
+        drawIcon: false,
+        interval: 0,
+        lockSize: false,
+        size: 1.5,
+        rememberControlled: true,
+        fillColor: "#FF0000",
+        fillAlpha: 0.3
+      });
+
+      if ( result.cancelled ) return;
+
+      /* if we have some selected create a list of IDs to filter OUT of the collected tokens.
+       * We refuse to have a token follow itself
+       */
+      const selectedIds = canvas.tokens.controlled.map( t => t.id );
+
+      const tokens = warpgate.crosshairs.collect(result).filter( token => !selectedIds.includes(token.id) );
+
+      tokens.sort( (a, b,) => {
+        /* compute distance */
+        const distanceA = new Ray(followerToken.object.center, a.object.center).distance;
+        const distanceB = new Ray(followerToken.object.center, b.object.center).distance;
+
+        return distanceA < distanceB ? -1 : distanceA > distanceB ? 1 : 0;
+      });
+
+      targetToken = tokens[0];
+    }
+
+    return targetToken;
+
+  }
+
+  static async _queryOrientationAndFollow(leaderToken, followerToken, allSelected = true) {
+
+    /* confirmation info */
+    const confirmInfo = MODULE.format('feedback.pickConfirm', {leaderName: leaderToken.name, followerName: followerToken.name})
+    ui.notifications.info(confirmInfo);
+
+    let eventData = {
+      orientationVector: squadron.CONST.QUERY
+    };
+
+    const followerGroup = allSelected ? canvas.tokens.controlled : followerToken;
+
+    for (const selected of followerGroup) {
+      if (!eventData) break;
+      eventData = await Lookout.addFollower(leaderToken.id, selected.id, selected.parent.id,
+        eventData.orientationVector, eventData.locks )
+    }
+
+    return eventData;
+
+  }
+
+  /* UI Controls for switching to targeting,
+   * marking the leader, and notifying
+   */
+  static async _targetLeader(followerToken) {
+
+    const hud = followerToken.layer.hud;
+
+    // TODO
+    const useCrosshairs = MODULE.setting('useCrosshairs');
+
     const askInfo = MODULE.format('feedback.pickAsk', {followerName: followerToken.name});
     ui.notifications.info(askInfo)
 
     /* suppress the token hud */
     hud.clear();
+
+    if (useCrosshairs) {
+      
+      const targetToken = await UserInterface._crosshairsTarget(followerToken);
+
+      if (!targetToken) return;
+      
+      return UserInterface._queryOrientationAndFollow(targetToken, followerToken, true);
+
+    } else {
+      return UserInterface._toolTarget(followerToken);
+    }
   }
 
   static _activateTool(layer, toolName) {

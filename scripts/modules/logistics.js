@@ -90,7 +90,7 @@ export class Logistics {
     /* get our follower information */
     const followerData = token.getFlag(MODULE.data.name, MODULE['Lookout']?.leadersFlag) ?? {};
 
-    const {delta: deltaInfo, locks} = followerData[data.leader.tokenId];
+    const {delta: deltaInfo, locks, snap} = followerData[data.leader.tokenId];
 
     /* null delta means the leader thinks we are following, but are not */
     if (!deltaInfo){
@@ -114,8 +114,10 @@ export class Logistics {
     let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset);
     mergeObject(position, {x: token.data.x, y: token.data.y}, {overwrite: false});
 
-    /* snap to the grid if any. its confusing to be following off grid */
-    mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
+    /* snap to the grid if requested.*/
+    if (snap) {
+      mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
+    }
 
     /* check if we have moved -- i.e. on the 2d canvas */
     const isMove = position.x != token.data.x || position.y != token.data.y
@@ -153,12 +155,13 @@ export class Logistics {
 
     let pos = {};
 
-    //always give a xy
+    // give x/y if any 2d movement occured
     if (forwardVector.dx || forwardVector.dy){
       pos.x = newLocation.B.x + offset.x;
       pos.y = newLocation.B.y + offset.y;
     }
 
+    //give elevation update only if elevation changed
     if (forwardVector.dz) {
       pos.elevation = locks.elevation ? origin.z + dz : forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
     }
@@ -260,7 +263,7 @@ export class Logistics {
   }
 
   static async handleAddLeader(eventData) {
-    const {leaderId, followerId, sceneId, orientationVector, locks, initiator} = eventData;
+    const {leaderId, followerId, sceneId, orientationVector, locks, initiator, snap} = eventData;
 
     const scene = game.scenes.get(sceneId);
 
@@ -272,7 +275,7 @@ export class Logistics {
     let currentFollowInfo = duplicate(followerToken.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {});
 
     /* stamp in our new data */
-    currentFollowInfo[leaderId] = { delta: followerDelta, locks };
+    currentFollowInfo[leaderId] = { delta: followerDelta, locks, snap };
 
     const squadron = {
       [MODULE['Lookout'].leadersFlag] : currentFollowInfo,
