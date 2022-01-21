@@ -174,7 +174,7 @@ export class Lookout {
           options: elevation ?? true
         },{
           type: 'checkbox',
-          label: MODULE.localize('orientation.snap'),
+          label: MODULE.localize('orientation.snapLabel'),
           options: snap
         }],
         buttons: [{
