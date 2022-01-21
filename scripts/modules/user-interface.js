@@ -108,8 +108,7 @@ export class UserInterface {
       ui.notifications.info(confirmInfo);
 
       let eventData = {
-        orientationVector: squadron.CONST.QUERY,
-        locks: {planar: false, elevation:  true}
+        orientationVector: squadron.CONST.QUERY
       };
 
       for (const selected of canvas.tokens.controlled) {
@@ -117,16 +116,14 @@ export class UserInterface {
         eventData = await Lookout.addFollower(token.id, selected.id, followerToken.parent.id,
           eventData.orientationVector, eventData.locks )
       }
+
+      /* remove targets */
       game.users.get(user.id).broadcastActivity({targets: []})
       game.user.updateTokenTargets();
 
       /* switch back to select */
       UserInterface._activateTool(canvas.tokens, 'select');  
       
-      /* leave the hud turned off to hide the race condition?
-       * that causes the hud to update on target
-       */
-      //hud.bind(followerToken.object);
     };
 
     /* register our target hook */

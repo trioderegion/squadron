@@ -161,10 +161,10 @@ export class Lookout {
 
   static async addFollower(leaderId, followerId, sceneId, 
     orientation = squadron.CONST.QUERY,
-    {planar = false, elevation = true} = {}) {
+    {elevation = true, snap = true} = {}) {
 
     /* define default result based on inputs */
-    let result = {buttons: orientation, inputs: [planar, elevation]}
+    let result = {buttons: orientation, inputs: [elevation, snap]}
     if (orientation === squadron.CONST.QUERY) {
       /* ask for orientation */
       const dialogData = {
@@ -174,7 +174,8 @@ export class Lookout {
           options: elevation ?? true
         },{
           type: 'checkbox',
-          label: MODULE.localize('orientation.snap')
+          label: MODULE.localize('orientation.snap'),
+          options: snap
         }],
         buttons: [{
           label: MODULE.localize('orientation.left'),
