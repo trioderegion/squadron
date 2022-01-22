@@ -7,6 +7,10 @@
     "collideWalls": {
       "name": "Respect Walls on Follow",
       "hint": "Will check if the follower would collide with a wall when moving and will temporarily leave formation if this occurs. Reposition and rejoin formation to continue following."
+    },
+    "useCrosshairs": {
+      "name": "Use Crosshairs Targetting",
+      "hint": "Which method for leader selection to use: the built in targeting system or the Crosshairs targeting system."
     }
   },
   "workflow": {
