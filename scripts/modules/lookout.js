@@ -20,6 +20,8 @@ export class Lookout {
       Hooks.on('preUpdateToken', Lookout._preUpdateToken);
       Hooks.on('updateToken', Lookout._updateToken);
       Hooks.on('deleteToken', Lookout._deleteToken);
+      Hooks.on('pasteToken', Lookout._pasteToken);
+      Hooks.on('preCreateToken', Lookout._preCreateToken);
 
       warpgate.event.watch(MODULE[NAME].leaderMoveEvent, Logistics.handleLeaderMove, Logistics.containsOwnedFollower);
 
@@ -55,7 +57,17 @@ export class Lookout {
 
   }
 
-  static _deleteToken(tokenDoc, options, user){
+  static _preCreateToken( token, /*data, options*/ ) {
+    token.data.update({'flags.-=squadron':null});
+  }
+
+  static _pasteToken(/*sourceArray*/_, createArray) {
+
+    /* strip any formation info from the new tokens */
+    createArray.forEach( data => delete data.flags?.squadron )
+  }
+
+  static _deleteToken(tokenDoc, /*options*/_, user){
 
     /* only handle our initiated moves */
     if (user != game.user.id) return;
