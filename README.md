@@ -6,6 +6,11 @@ Below is a demonstration of Squadron in action.
 
 https://user-images.githubusercontent.com/14878515/134452536-6e4b532e-5d03-4776-bc4c-5d02be79af46.mp4
 
+Below is a demonstration of the Crosshairs targeting, updated orientation options, and the elevation tracking options.
+
+
+https://user-images.githubusercontent.com/14878515/150623200-e4337094-cd21-43ad-827f-7d580e867fca.mp4
+
 ## Usage
 
 Most of the functionality of Squadron is contained within a button added to a token's right click HUD and has three states of operation, which are detailed below.
