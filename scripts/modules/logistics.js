@@ -296,7 +296,7 @@ export class Logistics {
     
     const leaderAngle = Logistics._computeLeaderAngle(orientationVector);
 
-    const followerVector = {x: followerPlaceable.x - leaderPlaceable.x, y: followerPlaceable.y - leaderPlaceable.y};
+    const followerVector = {x: followerPlaceable.center.x - leaderPlaceable.center.x, y: followerPlaceable.center.y - leaderPlaceable.center.y};
     const followerRay = new Ray({x:0, y:0}, followerVector);
     const followerAngle = followerRay.angle;
 
