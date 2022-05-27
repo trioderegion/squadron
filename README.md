@@ -41,18 +41,33 @@ If a token that is currently in formation or following a leader moves on its own
 
 For example, if a group is in formation crawling through a dungeon and enters a room, it is likely that each member of the group will go off and search or investigate their own thing. Once the room as been cleared of monsters or searched, and the group is ready to move on, each follower will simply click Rejoin Formation and will fall back in line with their Leader in the previous formation.
 
-## API
+### API
 
-```Signature: async squadron.follow(leaderId, followerId, sceneId, orientation = squadron.CONST.QUERY, options={elevation=true,snap=true})```
-  ```leaderId```: "string "Id of the token that the token specified by followerId should follow
-  ```followerId```: "string "Id of the token that should follow the token specified by leaderId
-  ```sceneId```: "string "Id of the scene the tokens can be found in
-  ```orientation```: {object} Specifies the orientation the follower token is supposed to keep in regards to the leading token. Accepts any of the values accessible in squadron.CONST. Namely squadron.CONST.DOWN, squadron.CONST.LEFT, squadron.CONST.NONE, squadron.CONST.RIGHT, squadron.CONST.UP and squadron.CONST.QUERY. In the case squadron.CONST.QUERY is passed the user will be asked for the direction when the script is executed. This is also the default value
-  ```options```: {object} Accepts an object in which the elevation and snap keys can be specified as boolean values. These specify whether the following token follows elevation changes aswell and whether it is supposed to snap to grid when following respectively. By default both are true
+## follow
+
+Signature: ```async squadron.follow(leaderId, followerId, sceneId, orientation = squadron.CONST.QUERY, options={elevation=true,snap=true})```
+
+  ```leaderId```: "string "Id of the token that the token specified by followerId should follow.
   
-### `async squadron.stop(tokenDocument)`
-### `async squadron.pause(tokenDocument)`
-### `async squadron.resume(tokenDocument)`
+  ```followerId```: "string "Id of the token that should follow the token specified by leaderId.
+  
+  ```sceneId```: "string "Id of the scene the tokens can be found in.
+  
+  ```orientation```: {object} Specifies the orientation the follower token is supposed to keep in regards to the leading token. Accepts any of the values accessible in ```squadron.CONST```. Namely ```squadron.CONST.DOWN```, ```squadron.CONST.LEFT```, ```squadron.CONST.NONE```, ```squadron.CONST.RIGHT```, ```squadron.CONST.UP``` and ```squadron.CONST.QUERY```. In the case ```squadron.CONST.QUERY``` is passed the user will be asked for the direction when the script is executed. This is also the default value.
+  
+  ```options```: {object} Accepts an object in which the elevation and snap keys can be specified as boolean values. These specify whether the following token follows elevation changes aswell and whether it is supposed to snap to grid when following respectively. By default both are true.
+
+## stop
+Signature: ```async squadron.stop(tokenDocument)```
+  ```tokenDocument```: {tokenDocument} Stops the token associated with the passed token document from following other tokens and clears all configured following behaviour on it.
+  
+## pause
+Signature: ```async squadron.pause(tokenDocument)```
+  ```tokenDocument```: {tokenDocument} Temporarily stops the token associated with the passed token document from following other tokens but does not clear configured following behaviour.
+  
+##
+Signature: `async squadron.resume(tokenDocument)`
+```tokenDocument```: {tokenDocument} Resumes paused following behaviour of the token associated with the passed token document.
 
 ## Troubleshooting Utilities
 
