@@ -43,7 +43,13 @@ For example, if a group is in formation crawling through a dungeon and enters a 
 
 ## API
 
-### `async squadron.follow(leaderId, followerId, sceneId, orientation = squadron.CONST.QUERY)`
+```Signature: async squadron.follow(leaderId, followerId, sceneId, orientation = squadron.CONST.QUERY, options={elevation=true,snap=true})```
+  ```leaderId```: "string "Id of the token that the token specified by followerId should follow
+  ```followerId```: "string "Id of the token that should follow the token specified by leaderId
+  ```sceneId```: "string "Id of the scene the tokens can be found in
+  ```orientation```: {object} Specifies the orientation the follower token is supposed to keep in regards to the leading token. Accepts any of the values accessible in squadron.CONST. Namely squadron.CONST.DOWN, squadron.CONST.LEFT, squadron.CONST.NONE, squadron.CONST.RIGHT, squadron.CONST.UP and squadron.CONST.QUERY. In the case squadron.CONST.QUERY is passed the user will be asked for the direction when the script is executed. This is also the default value
+  ```options```: {object} Accepts an object in which the elevation and snap keys can be specified as boolean values. These specify whether the following token follows elevation changes aswell and whether it is supposed to snap to grid when following respectively. By default both are true
+  
 ### `async squadron.stop(tokenDocument)`
 ### `async squadron.pause(tokenDocument)`
 ### `async squadron.resume(tokenDocument)`
