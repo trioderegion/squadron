@@ -46,6 +46,48 @@ export class Logistics {
     return vector;
   }
 
+  /**
+   *
+   * @example
+   * ```json
+   * {
+   *  "leader": {
+   *      "tokenId": "br5CLQqneLsRA8dG",
+   *      "sceneId": "kjgFSuEJMBUH0gq4",
+   *      "finalPosition": {
+   *          "x": 1350,
+   *          "y": 850,
+   *          "z": 0
+   *      },
+   *      "followVector": {
+   *          "A": {
+   *              "x": 1350,
+   *              "y": 850,
+   *              "z": 0
+   *          },
+   *          "B": {
+   *              "x": 1450,
+   *              "y": 950,
+   *              "z": 0
+   *          },
+   *          "y0": 850,
+   *          "x0": 1350,
+   *          "dx": 100,
+   *          "dy": 100,
+   *          "slope": 1,
+   *          "z0": 0,
+   *          "dz": 0
+   *      }
+   *  },
+   *  "followers": [
+   *      "o6jXMX22dnYljtVN"
+   *  ],
+   *  "sceneId": "kjgFSuEJMBUH0gq4",
+   *  "userId": "dZNkKae5pRvEOgcB"
+   * }
+   *```
+   */
+
   static containsOwnedFollower(eventData) {
     
     /* are we the first owner of any of the
@@ -55,8 +97,7 @@ export class Logistics {
       if (sum) return sum;
       const token = game.scenes.get(eventData.sceneId).getEmbeddedDocument("Token", curr);
       if (!token) return sum;
-      const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause) ?? true;
-      if (MODULE.isFirstOwner(token.actor) && !paused) return true;
+      if (MODULE.isFirstOwner(token.actor)) return true;
       return sum;
     },false)
 
@@ -76,6 +117,16 @@ export class Logistics {
   /* followerData[leaderId]={angle,distance}}
    * where deltaVector is the offset relative
    * to the unit followVector of the leader
+   *
+   * @param {object} data  {
+          leader: {
+            tokenId: tokenDoc.id,
+            sceneId: tokenDoc.parent.id,
+            finalPosition: newLoc,
+            followVector
+          },
+          followers,
+        }
    */
   static _moveFollower( followerId, data ) {
 
@@ -83,14 +134,16 @@ export class Logistics {
     const token = game.scenes.get(data.sceneId).getEmbeddedDocument("Token", followerId);
     if (!token || !MODULE.isFirstOwner(token?.actor)) return;
 
-    const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
-
-    if (paused) return;
-
     /* get our follower information */
     const followerData = token.getFlag(MODULE.data.name, MODULE['Lookout']?.leadersFlag) ?? {};
 
     const {delta: deltaInfo, locks, snap} = followerData[data.leader.tokenId];
+
+    /* have i moved independently and am generally paused? */
+    const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+
+    /* is this _specific_ leader marked as a persistent follow? */
+    if (paused && !locks.follow) return;
 
     /* null delta means the leader thinks we are following, but are not */
     if (!deltaInfo){
@@ -280,7 +333,7 @@ export class Logistics {
     const squadron = {
       [MODULE['Lookout'].leadersFlag] : currentFollowInfo,
       [MODULE['Lookout'].followPause]: false,
-      [MODULE['Lookout'].lastUser]: initiator
+      [MODULE['Lookout'].lastUser]: initiator,
     }
 
     /* store the data */

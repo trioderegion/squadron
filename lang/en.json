@@ -27,6 +27,7 @@
     "title": "Select formation direction",
     "snapLabel": "Snap to Grid",
     "lockElevation": "Lock Elevation",
+    "persistLabel": "Always Follow",
     "none": "None",
     "up": "Up",
     "down": "Down",

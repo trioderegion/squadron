@@ -108,9 +108,10 @@ export class Lookout {
   }
 
   static _preUpdateToken(tokenDoc, update, options, user) {
-    if (Lookout._shouldTrack(update)) {
-      /* store 'old' location */
 
+    if (Lookout._shouldTrack(update)) {
+
+      /* store 'old' location */
       const oldLoc = Lookout._getLocation(tokenDoc); 
 
       mergeObject(options, {oldLoc});
@@ -173,10 +174,10 @@ export class Lookout {
 
   static async addFollower(leaderId, followerId, sceneId, 
     orientation = squadron.CONST.QUERY,
-    {elevation = true, snap = true} = {}) {
+    {elevation = true, snap = true, persist = false} = {}) {
 
     /* define default result based on inputs */
-    let result = {buttons: orientation, inputs: [elevation, snap]}
+    let result = {buttons: orientation, inputs: [elevation, snap, persist]}
     if (orientation === squadron.CONST.QUERY) {
       /* ask for orientation */
       const dialogData = {
@@ -188,6 +189,9 @@ export class Lookout {
           type: 'checkbox',
           label: MODULE.localize('orientation.snapLabel'),
           options: snap
+        },{
+          type: 'checkbox',
+          label: MODULE.localize('orientation.persistLabel'),
         }],
         buttons: [{
           label: MODULE.localize('orientation.left'),
@@ -222,7 +226,8 @@ export class Lookout {
       snap: result.inputs[1],
       locks: {
         planar: result.buttons.none ?? false,
-        elevation: result.inputs[0]
+        elevation: result.inputs[0],
+        follow: result.inputs[2],
       },
       initiator: game.user.id //for informing user of things
     }
