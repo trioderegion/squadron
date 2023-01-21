@@ -58,7 +58,7 @@ export class Lookout {
   }
 
   static _preCreateToken( token, /*data, options*/ ) {
-    token.data.update({'flags.-=squadron':null});
+    token.updateSource({'flags.-=squadron':null});
   }
 
   static _pasteToken(/*sourceArray*/_, createArray) {
@@ -103,11 +103,11 @@ export class Lookout {
   static _getLocation(tokenDoc){
       return {
         ...tokenDoc.object.center,
-        z: tokenDoc.data.elevation
+        z: tokenDoc.elevation
       }
   }
 
-  static _preUpdateToken(tokenDoc, update, options, user) {
+  static _preUpdateToken(tokenDoc, update, options/*, user*/) {
 
     if (Lookout._shouldTrack(update)) {
 

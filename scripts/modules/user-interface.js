@@ -43,18 +43,18 @@ export class UserInterface {
 
       /* we are following, but have paused */
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.rejoin'), 'fa-sitemap', 
-        (event)=>{ allSelected(UserInterface._resumeFollow)});
+        ()=>{ allSelected(UserInterface._resumeFollow)});
     } else if (paused === undefined) {
 
       /* if the pause flag doesnt exist, we arent following anyone */
       /* special handling of multi-selected for this one, dont use helper */
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.pick'), 'fa-users',
-        (event) => { UserInterface._targetLeader(token)})
+        () => { UserInterface._targetLeader(token)})
     } else {
 
       /* otherwise, we are following normally and have the option to stop */
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.leave'), 'fa-users-slash', 
-        (event)=>{ allSelected(UserInterface._stopFollow)});
+        ()=>{ allSelected(UserInterface._stopFollow)});
     }
   }
 
@@ -69,7 +69,7 @@ export class UserInterface {
 
     const button = $(`<div class="control-icon squadron" title="${title}"><i class="fas ${icon}"></i></div>`);
 
-    button.click( clickEvent );
+    button.on('mouseup', clickEvent );
 
     const column = '.col.left';
     html.find(column).append(button);

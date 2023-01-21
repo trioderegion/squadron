@@ -165,7 +165,7 @@ export class Logistics {
     /* get follower token size offset (translates center to corner) */
     const offset = {x: -token.object.w/2, y: -token.object.h/2, z: 0};
     let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset);
-    mergeObject(position, {x: token.data.x, y: token.data.y}, {overwrite: false});
+    mergeObject(position, {x: token.x, y: token.y}, {overwrite: false});
 
     /* snap to the grid if requested.*/
     if (snap) {
@@ -173,7 +173,7 @@ export class Logistics {
     }
 
     /* check if we have moved -- i.e. on the 2d canvas */
-    const isMove = position.x != token.data.x || position.y != token.data.y
+    const isMove = position.x != token.x || position.y != token.y
 
     let moveInfo = {update: {_id: followerId, ...position}, stop: false, user, name: token.name};
 
@@ -182,8 +182,8 @@ export class Logistics {
     //      the same scene as the event. 
     if(MODULE.setting('collideWalls') && canvas.scene.id === data.sceneId && isMove) {
       //get centerpoint offset
-      const offset = {x: token.object.center.x - token.data.x, y: token.object.center.y - token.data.y};
-      moveInfo.stop = Logistics._hasCollision([token.data.x+offset.x, token.data.y+offset.y, moveInfo.update.x+offset.x, moveInfo.update.y+offset.y]);
+      const offset = {x: token.object.center.x - token.x, y: token.object.center.y - token.y};
+      moveInfo.stop = Logistics._hasCollision([token.x+offset.x, token.y+offset.y, moveInfo.update.x+offset.x, moveInfo.update.y+offset.y]);
       
     }
 
@@ -193,7 +193,7 @@ export class Logistics {
   /* checks for wall collision along the array form of a ray */
   static _hasCollision(points) {
     const ray = new Ray({x: points[0], y: points[1]}, {x: points[2], y: points[3]});
-    return canvas.walls.checkCollision(ray)
+    return canvas.walls.checkCollision(ray, {mode:'any',type:'move'});
   }
 
   /* unit normal is forward */
@@ -353,7 +353,7 @@ export class Logistics {
     const followerRay = new Ray({x:0, y:0}, followerVector);
     const followerAngle = followerRay.angle;
 
-    return {angle: followerAngle + leaderAngle, distance: followerRay.distance, dz: followerPlaceable.data.elevation - leaderPlaceable.data.elevation, orientation: orientationVector}
+    return {angle: followerAngle + leaderAngle, distance: followerRay.distance, dz: followerPlaceable.document.elevation - leaderPlaceable.document.elevation, orientation: orientationVector}
   }
 
   /* Will erase all squadron data from all scenes (if parameter == true) or
@@ -371,7 +371,7 @@ export class Logistics {
   }
 
   static _disbandScene(scene) {
-    const tokens = scene.getEmbeddedCollection('Token').filter( token => token.data.flags?.squadron );
+    const tokens = scene.getEmbeddedCollection('Token').filter( token => token.flags?.squadron );
     const updates = tokens.map( (token) => {return { _id: token.id, 'flags.-=squadron':null}});
     return scene.updateEmbeddedDocuments('Token', updates);
   }

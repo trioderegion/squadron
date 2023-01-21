@@ -1,10 +1,15 @@
 {
   "name": "squadron",
+  "id": "squadron",
   "title": "Squadron",
   "description": "Quickly create marching orders or formations for your tokens. Easy jump in and out of your formation or halt others from following you.",
   "version": "0.1.0",
-  "minimumCoreVersion": "0.8.6",
-  "compatibleCoreVersion": "9",
+  "minimumCoreVersion": "10",
+  "compatibleCoreVersion": "10",
+  "compatibility": {
+    "minimum": "10",
+    "verified": "10.921"
+  },
   "author": "honeybadger",
   "authors": [
     {
@@ -27,12 +32,18 @@
         "path": "lang/ja.json"
       }
   ],
-  "dependencies": [
-    {
-      "name": "warpgate",
-      "manifest": "https://github.com/trioderegion/warpgate/releases/latest/download/module.json"
-    }
-  ],
+  "relationships": {
+    "requires": [{
+      "id": "warpgate",
+      "type": "module",
+      "manifest": "https://github.com/trioderegion/warpgate/releases/latest/download/module.json",
+      "compatibility": {
+        "minimum": "1.12.1",
+        "verified": "1.15.x",
+        "maximum": "2"
+      }
+    }]
+  },
   "url": "https://github.com/trioderegion/squadron",
   "manifest": "",
   "download": "",
