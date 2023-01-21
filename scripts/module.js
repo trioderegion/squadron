@@ -28,12 +28,12 @@ export class MODULE{
     return game.settings.get(MODULE.data.name, key);
   }
 
-  static localize(...args){
-    return game.i18n.localize(...args);
+  static localize(moduleKey){
+    return game.i18n.localize("sqdrn."+moduleKey);
   }
 
-  static format(...args){
-    return game.i18n.format(...args);
+  static format(moduleKey, data){
+    return game.i18n.format("sqdrn."+moduleKey, data);
   }
 
   static firstGM(){
