@@ -1,9 +1,9 @@
 
 
-import { MODULE } from '../module.js'
-import { Lookout } from './lookout.js'
-import { Logistics } from './logistics.js'
-import { logger } from './logger.js'
+import { MODULE } from './module.mjs'
+import { Lookout } from './lookout.mjs'
+import { Logistics } from './logistics.mjs'
+import { logger } from './logger.mjs'
 
 const NAME = 'UserInterface';
 

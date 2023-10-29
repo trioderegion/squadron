@@ -1,8 +1,8 @@
 
-import { MODULE } from '../module.js'
-import { Logistics } from './logistics.js'
-import { logger } from './logger.js'
-import { UserInterface } from './user-interface.js'
+import { MODULE } from './module.mjs'
+import { Logistics } from './logistics.mjs'
+import { logger } from './logger.mjs'
+import { UserInterface } from './user-interface.mjs'
 
 const NAME = 'Lookout';
 
@@ -208,7 +208,13 @@ export class Lookout {
         },{
           label: MODULE.localize('orientation.none'),
           value: squadron.CONST.NONE,
-        }],
+        },{
+          label: MODULE.localize('orientation.shadow'),
+          value: squadron.CONST.SHADOW,
+        },{
+          label: MODULE.localize('orientation.mirror'),
+          value: squadron.CONST.SHADOW,
+        }]
       }
 
       result = await warpgate.menu(dialogData,{title: MODULE.localize('orientation.title')})
@@ -217,17 +223,18 @@ export class Lookout {
     /* dialog was cancelled */
     if (result.buttons === false) return false;
     logger.debug('Behind vector', result);
-
+    
+    const [elevationLock, snapToGrid, alwaysFollow] = result.inputs;
     const eventData = {
       leaderId,
       followerId,
       sceneId,
       orientationVector: result.buttons, //leader does not care about this
-      snap: result.inputs[1],
+      snap: snapToGrid,
       locks: {
         planar: result.buttons.none ?? false,
-        elevation: result.inputs[0],
-        follow: result.inputs[2],
+        elevation: elevationLock,
+        follow: alwaysFollow,
       },
       initiator: game.user.id //for informing user of things
     }

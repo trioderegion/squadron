@@ -1,6 +1,6 @@
 /** MIT (c) 2021 DnD5e Helpers */
 
-import { logger } from './modules/logger.js';
+import { logger } from './logger.mjs';
 
 const NAME = "squadron";
 const PATH = `/modules/${NAME}`;
