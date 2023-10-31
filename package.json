@@ -8,6 +8,6 @@
     "dev-den": "rollup --config ../rollup-config-badger-den/src/rollup-config-badger-den.mjs --config-den src/squadron:dev"
   },
   "devDependencies": {
-    "rollup-config-badger-den": "^0.10.0"
+    "rollup-config-badger-den": "^0.10.1"
   }
 }

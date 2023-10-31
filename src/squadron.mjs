@@ -4,6 +4,7 @@ import { UserInterface } from './modules/user-interface.mjs'
 import { Lookout } from './modules/lookout.mjs'
 import { Logistics } from './modules/logistics.mjs'
 import { api } from './modules/api.mjs'
+import Formation from './apps/Formation';
 
 const SUB_MODULES = {
   MODULE,
@@ -12,6 +13,7 @@ const SUB_MODULES = {
   Logistics,
   api,
   logger,
+  Formation,
 }
 
 /*

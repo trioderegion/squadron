@@ -1,5 +1,4 @@
 {
-  "name": "squadron",
   "title": "Squadron",
   "description": "Quickly create marching orders or formations for your tokens. Easy jump in and out of your formation or halt others from following you.",
   "version": "dev",
@@ -7,19 +6,23 @@
     "main": "squadron.mjs",
     "lang": "lang/*"
   },
+  "static": "*.hbs",
   "profile": {
     "dev": {
-      "dest": "../dev"
+      "dest": "../dev",
+      "clean": true,
+      "hmr":true,
+      "compress": true,
+      "sourcemaps":true
     },
     "release": {
       "dest": "../dist",
-      "clean": "true"
+      "clean": true
     }
   },
   "dependencies": {
     "core": [
-      "11",
-      "11.313"
+      "11"
     ],
     "modules": {
       "warpgate": [
@@ -33,17 +36,5 @@
       "url": "https://github.com/trioderegion"
     }
   ],
-  "relationships": {
-    "requires": [{
-      "id": "warpgate",
-      "type": "module",
-      "manifest": "https://github.com/trioderegion/warpgate/releases/latest/download/module.json",
-      "compatibility": {
-        "minimum": "1.12.1",
-        "verified": "1.15.x",
-        "maximum": "2"
-      }
-    }]
-  },
   "projectUrl": "https://github.com/trioderegion/squadron"
 }
