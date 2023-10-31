@@ -4,9 +4,10 @@
   "description": "fvtt module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "rollup --config node:rollup-config-badger-den --config-den src/squadron:dev" 
+    "dev": "rollup --config node:rollup-config-badger-den --config-den src/squadron:dev",
+    "dev-den": "rollup --config ../rollup-config-badger-den/src/rollup-config-badger-den.mjs --config-den src/squadron:dev"
   },
   "devDependencies": {
-    "rollup-config-badger-den": "^0.9.4"
+    "rollup-config-badger-den": "^0.10.0"
   }
 }
