@@ -1,3 +1,35 @@
-<section>
-  <p>Hello world</p>
-</section>
+<h2 style="grid-area:header">Formation</h2>
+<button style="grid-area:up;" disabled><i class="fa-solid fa-arrow-up"></i></button>
+<button style="grid-area:down;" disabled><i class="fa-solid fa-arrow-down"></i></button>
+<button style="grid-area:left;" disabled><i class="fa-solid fa-arrow-left"></i></button>
+<button style="grid-area:right;" disabled><i class="fa-solid fa-arrow-right"></i></button>
+<button style="grid-area:center;" disabled><i class="fa-solid fa-up-down-left-right"></i></button>
+
+<h2 style="grid-area:follow;">Follow</h2>
+<button style="grid-area:mirror" disabled>Mirrored</button>
+<button style="grid-area:normal" disabled>Shadow</button>
+<div class="flexcol" style="grid-area:elevation;">
+<h3>Elevation Mode</h3>
+<label>
+<input type="radio" checked value="formation" name="elevation">
+Tethered
+</label>
+<label>
+<input type="radio" value="follow" name="elevation">
+Offset
+</label>
+<label>
+<input type="radio" value="static" name="elevation">
+Static
+</label>
+</div>
+<div class="flexcol" style="grid-area:common;">
+<label>
+<input type="checkbox" name="always-follow">
+Never Pause
+</label>
+<label>
+<input type="checkbox" checked name="snap-to-grid">
+Snap to Grid
+</label>
+</div>

@@ -1,4 +1,13 @@
 .%config.id%.Formation .window-content {
-  background:black;
-  color:green;
+  display:grid;
+  grid: 
+    "header header header common" 1fr
+    ". up .  common" 1fr
+    "left center right  elevation" 1fr
+    ". down .  elevation" 1fr
+    "normal follow mirror elevation" 1fr
+    / 1fr 1fr 1fr 2fr;
+  img {
+    border:none;
+  }
 }

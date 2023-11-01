@@ -10,7 +10,7 @@
   "profile": {
     "dev": {
       "dest": "../dev",
-      "clean": true,
+      "clean": false,
       "hmr":true,
       "compress": true,
       "sourcemaps":true
