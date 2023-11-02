@@ -25,10 +25,15 @@ export class api {
           UP: {x:0, y:-1},
           DOWN: {x:0, y:1},
           RIGHT: {x:-1, y:0},
-          NONE: {x:0, y:0, none:true},
+          NONE: {x:0, y:0, mode:'static', none:true},
           SHADOW: {x:-1, y:-1, z:-1, mode:'rel'},
           MIRROR: {x:1, y:1, z:1, mode:'rel'},
           QUERY: true,
+        }
+      },
+      get EVENTS() {
+        return {
+          ...MODULE['Lookout']
         }
       }
     }

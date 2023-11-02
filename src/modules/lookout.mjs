@@ -213,7 +213,7 @@ export class Lookout {
           value: squadron.CONST.SHADOW,
         },{
           label: MODULE.localize('orientation.mirror'),
-          value: squadron.CONST.SHADOW,
+          value: squadron.CONST.MIRROR,
         }]
       }
 

@@ -1,13 +1,39 @@
 .%config.id%.Formation .window-content {
   display:grid;
+  grid-gap: 5px;
   grid: 
-    "header header header common" 1fr
-    ". up .  common" 1fr
-    "left center right  elevation" 1fr
-    ". down .  elevation" 1fr
-    "normal follow mirror elevation" 1fr
-    / 1fr 1fr 1fr 2fr;
+    "header header header . common" 1fr
+    ". up . . common" 1fr
+    "left center right . elevation" 1fr
+    ". down . . elevation" 1fr
+    "normal follow mirror . elevation" 1fr
+    / 1fr 1fr 1fr 10px 2fr;
+
+  align-items:center;
+  justify-items:center;
+
   img {
+    border:none;
+  }
+
+  .flexcol {
+    height:100%;
+    width:100%;
+  }
+
+  label {
+    display:inline-flex;
+    align-items:center;
+    justify-content: flex-start;
+
+    input {
+      position:static;
+      margin-right:5px;
+    }
+  }
+
+  h2, h3 {
+    margin:0;
     border:none;
   }
 }
