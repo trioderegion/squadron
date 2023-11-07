@@ -110,24 +110,17 @@ export class UserInterface {
         return;
       }
 
-      const eventData = await UserInterface._queryOrientationAndFollow(token, followerToken, true); 
+      const eventData = await UserInterface._queryOrientationAndFollow(token.document, followerToken, true); 
 
       /* remove targets */
       game.users.get(user.id).broadcastActivity({targets: []})
       game.user.updateTokenTargets();
-
-      /* switch back to select */
-      UserInterface._activateTool(canvas.tokens, 'select');  
 
       return eventData;
     }
 
     /* register our target hook */
     Hooks.once('targetToken', onTarget);
-
-    /* switch to targeting mode */
-    UserInterface._activateTool(canvas.tokens, 'target');
-
   }
 
   static async _crosshairsTarget(followerToken){
@@ -185,14 +178,12 @@ export class UserInterface {
 
     const useCrosshairs = MODULE.setting('useCrosshairs');
 
-    const askInfo = MODULE.format('feedback.pickAsk', {followerName: followerToken.name});
-    ui.notifications.info(askInfo)
-
     /* suppress the token hud */
     hud.clear();
 
     if (useCrosshairs) {
       
+      ui.notifications.info(MODULE.format('feedback.pickAsk', {followerName: followerToken.name}));
       const targetToken = await UserInterface._crosshairsTarget(followerToken);
 
       if (!targetToken) return;
@@ -200,15 +191,9 @@ export class UserInterface {
       return UserInterface._queryOrientationAndFollow(targetToken, followerToken, true);
 
     } else {
+      ui.notifications.info(MODULE.format('feedback.pickTarget', {followerName: followerToken.name}));
       return UserInterface._toolTarget(followerToken);
     }
   }
-
-  static _activateTool(layer, toolName) {
-    layer.activate();
-    ui.controls.control.activeTool = toolName;
-    ui.controls.render();
-  }
-
 
 }

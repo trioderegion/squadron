@@ -13,7 +13,7 @@ export default class extends Application {
       classes: [...super.defaultOptions.classes, '%config.id%', this.name],
       template: this.template,
       title: MODULE.format('app.title'),
-      top: 100,
+      top: 150,
     });
   }
 
@@ -67,16 +67,12 @@ export default class extends Application {
     }
     this.close();
 
-    /* confirmation info */
-    const confirmInfo = MODULE.format('feedback.pickConfirm', {leaderName: leaderToken.name, followerName: followerToken.name})
-    ui.notifications.info(confirmInfo);
-
     return this.startFollow(squadData);
   }
 
   startFollow(squadData) {
 
-    return this.squad.followers.map( follower => {
+    const data = this.squad.followers.map( follower => {
     
       const eventData = foundry.utils.mergeObject(squadData, {
         initiator: game.user.id,
@@ -91,5 +87,11 @@ export default class extends Application {
 
       return eventData;
     });
+
+    /* confirmation info */
+    const confirmInfo = MODULE.format('feedback.pickConfirm', {num: data.length})
+    ui.notifications.info(confirmInfo);
+
+    return data;
   }
 }

@@ -199,8 +199,9 @@ export class Logistics {
 
   /* checks for wall collision along the array form of a ray */
   static _hasCollision(points) {
-    const ray = new Ray({x: points[0], y: points[1]}, {x: points[2], y: points[3]});
-    return canvas.walls.checkCollision(ray, {mode:'any',type:'move'});
+    const origin = {x: points[0], y: points[1]};
+    const destination = {x: points[2], y: points[3]};
+    return CONFIG.Canvas.polygonBackends.move.testCollision(origin, destination, {mode:"any", type:"move"});
   }
 
   /* unit normal is forward */
