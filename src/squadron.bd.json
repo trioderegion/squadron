@@ -16,7 +16,8 @@
     },
     "release": {
       "dest": "../dist",
-      "clean": true
+      "clean": true,
+      "sourcemaps":true
     }
   },
   "dependencies": {
