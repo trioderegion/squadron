@@ -74,12 +74,12 @@ export class UserInterface {
   static async stop(followerToken) {
     Logistics.announceStopFollow(followerToken);
     await followerToken.update({'flags.-=squadron': null});
-    canvas.tokens.hud.render(false);
+    if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
   }
 
   static async resume(followerToken) {
     await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
-    canvas.tokens.hud.render(false);
+    if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
   }
 
   static _stopFollow(followerToken){
