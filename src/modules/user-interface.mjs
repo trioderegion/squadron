@@ -1,11 +1,7 @@
-
-
-import { MODULE } from '../module.js'
-import { Lookout } from './lookout.js'
-import { Logistics } from './logistics.js'
-import { logger } from './logger.js'
-
-const NAME = 'UserInterface';
+import { MODULE } from './module.mjs'
+import { Logistics } from './logistics.mjs'
+import { logger } from './logger.mjs'
+import Formation from '../apps/Formation';
 
 export class UserInterface {
 
@@ -18,7 +14,10 @@ export class UserInterface {
     const config = true;
     const settingsData = {
       useCrosshairs: {
-        scope: "world", config, default: true, type: Boolean
+        scope: "client", config, default: true, type: Boolean
+      },
+      silentCollide: {
+        scope: "client", config, default: false, type: Boolean
       }
     }
 
@@ -60,6 +59,7 @@ export class UserInterface {
 
   /* eventData: {tokenId, tokenName, user} */
   static notifyCollision(eventData) {
+    if (!MODULE.setting('silentCollide'))
     logger.notify(MODULE.format('feedback.wallCollision', {tokenId: eventData.tokenId, tokenName: eventData.tokenName}));
   }
 
@@ -78,12 +78,12 @@ export class UserInterface {
   static async stop(followerToken) {
     Logistics.announceStopFollow(followerToken);
     await followerToken.update({'flags.-=squadron': null});
-    canvas.tokens.hud.render(false);
+    if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
   }
 
   static async resume(followerToken) {
     await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
-    canvas.tokens.hud.render(false);
+    if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
   }
 
   static _stopFollow(followerToken){
@@ -170,24 +170,10 @@ export class UserInterface {
 
   static async _queryOrientationAndFollow(leaderToken, followerToken, allSelected = true) {
 
-    /* confirmation info */
-    const confirmInfo = MODULE.format('feedback.pickConfirm', {leaderName: leaderToken.name, followerName: followerToken.name})
-    ui.notifications.info(confirmInfo);
+    const followerGroup = allSelected ? canvas.tokens.controlled : [followerToken];
 
-    let eventData = {
-      orientationVector: squadron.CONST.QUERY
-    };
-
-    const followerGroup = allSelected ? canvas.tokens.controlled : followerToken;
-
-    for (const selected of followerGroup) {
-      if (!eventData) break;
-      eventData = await Lookout.addFollower(leaderToken.id, selected.id, selected.parent.id,
-        eventData.orientationVector, eventData.locks )
-    }
-
-    return eventData;
-
+    new Formation({leader:leaderToken.id, followers: followerGroup.map( t => t.id ), scene: leaderToken.parent.id}).render(true);
+    
   }
 
   /* UI Controls for switching to targeting,
@@ -197,7 +183,6 @@ export class UserInterface {
 
     const hud = followerToken.layer.hud;
 
-    // TODO
     const useCrosshairs = MODULE.setting('useCrosshairs');
 
     const askInfo = MODULE.format('feedback.pickAsk', {followerName: followerToken.name});

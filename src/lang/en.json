@@ -1,0 +1,68 @@
+{
+  "sqdrn": {
+    "app": {
+      "title": "Squadron Configuration",
+      "formation": "Formation",
+      "follow": "Follow",
+      "config": {
+        "elevation": "Elevation Mode",
+        "snap": "Snap to Grid",
+        "nopause": "Never Pause"
+      }
+    },
+    "tips": {
+      "tethered": "Follower's elevation is kept in formation with their leader.",
+      "offset": "Follower's relative elevation compared to their leader is preserved.",
+      "static": "Follower's elevation is not affected by their leader. Useful for areas of effect or following a flying token.",
+      "pinned": "Follower remains <q>pinned</q> in its initial orientation relative to their leader. Useful for <q>glueing</q> tokens together.",
+      "pulled": "Follower is <q>pulled</q> along in the same direction as their leader. Useful for riding vehicles.",
+      "snap": "Follower is snapped to grid during movements.",
+      "nopause": "Moving the follower token will not pause it from following their leader. Useful for riding vehicles.",
+      "formation": "Keep the follower in their relative position (e.g. <q>behind</q> or <q>in front</q>) as the leader moves. Select the direction your leader is moving or the direction the formation is facing."
+    },
+    "elevation": {
+      "tethered": "Tethered",
+      "offset": "Offset",
+      "static": "Static"
+    },
+    "setting": {
+      "debug": {
+        "name": "Enable Debug Info",
+        "hint": "Logs additional debugging information to the console"
+      },
+      "collideWalls": {
+        "name": "Respect Walls on Follow",
+        "hint": "Will check if the follower would collide with a wall when moving and will temporarily leave formation if this occurs. Reposition and rejoin formation to continue following."
+      },
+      "useCrosshairs": {
+        "name": "Use Crosshairs Targetting",
+        "hint": "Which method for leader selection to use: the built in targeting system or the Crosshairs targeting system."
+      },
+      "silentCollide": {
+        "name": "Suppress Collision Toasts",
+        "hint": "Remove notification indicating a token you own has collided with a wall and stopped following its leader."
+      }
+    },
+    "workflow": {
+      "pick": "Pick Leader",
+      "rejoin": "Rejoin Formation",
+      "leave": "Leave Formation"
+    },
+    "feedback": {
+      "pickAsk": "Please select the leader token for {followerName}",
+      "pickConfirm": "{leaderName} is being followed by {followerName}",
+      "wallCollision": "{tokenName}'s movement collides with a wall and has left formation. (Token [{tokenId}])"
+    },
+    "orientation": {
+      "title": "Select formation direction",
+      "snapLabel": "Snap to Grid",
+      "lockElevation": "Lock Elevation",
+      "persistLabel": "Always Follow",
+      "none": "None",
+      "up": "Up",
+      "down": "Down",
+      "left": "Left",
+      "right": "Right"
+    }
+  }
+}

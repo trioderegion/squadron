@@ -1,6 +1,6 @@
 /** MIT (c) 2021 DnD5e Helpers */
 
-import { logger } from './modules/logger.js';
+import { logger } from './logger.mjs';
 
 const NAME = "squadron";
 const PATH = `/modules/${NAME}`;
@@ -32,7 +32,7 @@ export class MODULE{
     return game.i18n.localize("sqdrn."+moduleKey);
   }
 
-  static format(moduleKey, data){
+  static format(moduleKey, data = {}){
     return game.i18n.format("sqdrn."+moduleKey, data);
   }
 

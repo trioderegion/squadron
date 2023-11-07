@@ -1,5 +1,5 @@
-import { logger } from './logger.js'
-import { MODULE } from '../module.js'
+import { logger } from './logger.mjs'
+import { MODULE } from './module.mjs'
 
 class FollowVector extends Ray {
   constructor( A, B ) {
@@ -148,13 +148,20 @@ export class Logistics {
     /* null delta means the leader thinks we are following, but are not */
     if (!deltaInfo){
       logger.debug(`Leader ${data.leader.tokenId} thinks ${token.name} is following, but they disagree`);
+      warpgate.event.notify(MODULE['Lookout'].removeFollowerEvent,
+        {
+          leaderId: data.leader.tokenId,
+          followerId,
+          sceneId: data.sceneId
+        });
+
       return;
     }
 
     /* from follow vector, calculate our new position */
     let {followVector, finalPosition} = data.leader;
 
-    if ( typeof followVector !== "FollowVector" ){
+    if ( !(followVector instanceof FollowVector) ){
       /* this was serialized from another client */
       followVector = new FollowVector(followVector.A, followVector.B);
     }
@@ -164,7 +171,7 @@ export class Logistics {
 
     /* get follower token size offset (translates center to corner) */
     const offset = {x: -token.object.w/2, y: -token.object.h/2, z: 0};
-    let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset);
+    let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset, token);
     mergeObject(position, {x: token.x, y: token.y}, {overwrite: false});
 
     /* snap to the grid if requested.*/
@@ -197,29 +204,46 @@ export class Logistics {
   }
 
   /* unit normal is forward */
-  static _calculateNewPosition(origin, forwardVector, delta, locks, offset){
+  static _calculateNewPosition(origin, forwardVector, delta, locks, offset, token){
     const {angle, distance, dz, orientation} = delta; 
-    const offsetAngle = forwardVector.angle;
-
-    /* if planar locked preserve initial orientation */
-    const finalAngle = locks.planar ? (new Ray({x:0,y:0}, orientation)).angle + angle : offsetAngle + angle;
-
-    const newLocation = Ray.fromAngle(origin.x, origin.y, finalAngle, distance);
-
     let pos = {};
 
-    // give x/y if any 2d movement occured
-    if (forwardVector.dx || forwardVector.dy){
-      pos.x = newLocation.B.x + offset.x;
-      pos.y = newLocation.B.y + offset.y;
+    /* Compute X/Y depending on mode */
+    if (delta.orientation.mode == 'rel') {
+      pos.x = token.x + orientation.x * forwardVector.dx;
+      pos.y = token.y + orientation.y * forwardVector.dy;
+    } else {
+      const offsetAngle = forwardVector.angle;
+
+      /* if planar locked preserve initial orientation */
+      const finalAngle = delta.orientation.mode == 'static' ? (new Ray({x:0,y:0}, orientation)).angle + angle : offsetAngle + angle;
+
+      const newLocation = Ray.fromAngle(origin.x, origin.y, finalAngle, distance);
+
+      // give x/y if any 2d movement occured
+      if (forwardVector.dx || forwardVector.dy){
+        pos.x = newLocation.B.x + offset.x;
+        pos.y = newLocation.B.y + offset.y;
+      }
+
     }
 
-    //give elevation update only if elevation changed
+    /* compute elevation change depending on its mode */
     if (forwardVector.dz) {
-      pos.elevation = locks.elevation ? origin.z + dz : forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
+      switch (locks.elevation) {
+        case 'static':
+          break;
+        case 'offset':
+          pos.elevation = origin.z + dz;
+          break;
+        case 'tether':
+          pos.elevation = forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
+          break;
+      }
     }
 
     return pos;
+
   }
 
   /* return {Promise} */

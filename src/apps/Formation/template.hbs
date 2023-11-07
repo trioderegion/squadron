@@ -1,0 +1,53 @@
+<h2 style="grid-area:header">{{localize 'sqdrn.app.formation'}}<i data-tooltip="{{{localize 'sqdrn.tips.formation'}}}" class="fa-regular fa-circle-question fa-xs"></i></h2>
+
+<button style="grid-area:up;" data-value="UP"><i
+    class="fa-solid fa-arrow-up"
+  ></i></button>
+
+<button style="grid-area:down;" data-value="DOWN"><i
+    class="fa-solid fa-arrow-down"
+  ></i></button>
+
+<button style="grid-area:left;" data-value="LEFT"><i
+    class="fa-solid fa-arrow-left"
+  ></i></button>
+
+<button style="grid-area:right;" data-value="RIGHT"><i
+    class="fa-solid fa-arrow-right"
+  ></i></button>
+
+<button style="grid-area:center;" data-tooltip="{{{localize 'sqdrn.tips.pinned'}}}" data-value="NONE"><i
+    class="fa-solid fa-thumbtack"
+  ></i></button>
+
+<h2 style="grid-area:follow;">{{localize 'sqdrn.app.follow'}}</h2>
+
+<button style="grid-area:normal" data-tooltip="{{{localize 'sqdrn.tips.pulled'}}}" data-value="SHADOW"><i
+    class="fa-solid fa-people-pulling"
+  ></i></button>
+
+<form class="flexcol" style="grid-area:elevation;">
+  <h3>{{localize 'sqdrn.app.config.elevation'}}</h3>
+  <label>
+    <input type="radio" data-tooltip="{{{localize 'sqdrn.tips.tethered'}}}" checked value="tether" name="elevation" />
+    {{localize 'sqdrn.elevation.tethered'}}
+  </label>
+  <label>
+    <input type="radio" data-tooltip="{{{localize 'sqdrn.tips.offset'}}}" value="offset" name="elevation" />
+    {{localize 'sqdrn.elevation.offset'}}
+  </label>
+  <label>
+    <input type="radio" data-tooltip="{{{localize 'sqdrn.tips.static'}}}" value="static" name="elevation" />
+    {{localize 'sqdrn.elevation.static'}}
+  </label>
+</form>
+<form class="flexcol" style="grid-area:common;">
+  <label>
+    <input type="checkbox" data-tooltip="{{{localize 'sqdrn.tips.snap'}}}" checked name="snap-grid" />
+    {{localize 'sqdrn.app.config.snap'}}
+  </label>
+  <label>
+    <input type="checkbox" data-tooltip="{{{localize 'sqdrn.tips.nopause'}}}" name="no-pause" />
+    {{localize 'sqdrn.app.config.nopause'}}
+  </label>
+</form>

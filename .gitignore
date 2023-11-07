@@ -2,3 +2,6 @@
 *.swo
 *.orig
 *.code-workspace
+node_modules/
+dev/
+dist/
