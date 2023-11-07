@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "rollup --config node:rollup-config-badger-den --config-den src/squadron:dev",
-    "dev-den": "rollup --config ../rollup-config-badger-den/src/rollup-config-badger-den.mjs --config-den src/squadron:dev"
+    "build": "rollup --config node:rollup-config-badger-den --config-den src/squadron:release"
   },
   "devDependencies": {
     "rollup-config-badger-den": "^1.0.1"
