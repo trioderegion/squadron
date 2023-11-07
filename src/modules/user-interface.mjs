@@ -14,7 +14,10 @@ export class UserInterface {
     const config = true;
     const settingsData = {
       useCrosshairs: {
-        scope: "world", config, default: true, type: Boolean
+        scope: "client", config, default: true, type: Boolean
+      },
+      silentCollide: {
+        scope: "client", config, default: false, type: Boolean
       }
     }
 
@@ -56,6 +59,7 @@ export class UserInterface {
 
   /* eventData: {tokenId, tokenName, user} */
   static notifyCollision(eventData) {
+    if (!MODULE.setting('silentCollide'))
     logger.notify(MODULE.format('feedback.wallCollision', {tokenId: eventData.tokenId, tokenName: eventData.tokenName}));
   }
 

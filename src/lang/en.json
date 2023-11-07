@@ -37,6 +37,10 @@
       "useCrosshairs": {
         "name": "Use Crosshairs Targetting",
         "hint": "Which method for leader selection to use: the built in targeting system or the Crosshairs targeting system."
+      },
+      "silentCollide": {
+        "name": "Suppress Collision Toasts",
+        "hint": "Remove notification indicating a token you own has collided with a wall and stopped following its leader."
       }
     },
     "workflow": {
