@@ -1,30 +1,32 @@
+import {MODULE} from '../../modules/module.mjs';
+
 export default class extends Application {
   static get name() { return 'Formation' };
   static get template() { return `modules/%config.id%/apps/${this.name}/template.hbs` };
 
   static register() {
-    console.log('formation app loaded');
     loadTemplates([this.template]);
-    Hooks.on('ready', () => new this({leader:'a', follower:'b', scene:'c'}).render(true))
   }
 
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: [...super.defaultOptions.classes, '%config.id%', this.name],
       template: this.template,
-      title: 'Squadron Token Configuration',
+      title: MODULE.format('app.title'),
       top: 100,
-      simulate:true,
     });
   }
 
-  constructor({leader = null, follower = null, scene = null}, options = {}) {
+  constructor({leader = null, followers = [], scene = null}, options = {}) {
     super(options);
-    if(!leader || !follower || !scene) {
-      throw new Error('leader, follower, and scene IDs required');
+
+    if (typeof followers == 'string') followers = [followers];
+
+    if(!leader || followers.length == 0 || !scene) {
+      throw new Error('leader, follower(s), and scene IDs required');
     }
 
-    this.squad = {leader, follower, scene};
+    this.squad = {leader, followers, scene};
   }
 
   activateListeners(html) {
@@ -43,7 +45,7 @@ export default class extends Application {
     evt.preventDefault();
     
     const formData = {
-      'elevation': 'tethered',
+      'elevation': 'tether',
       'snap-grid': false,
       'no-pause': false,
     };
@@ -56,27 +58,38 @@ export default class extends Application {
     }
 
     const squadData = {
-      initiator: game.user.id,
       orientationVector: squadron.CONST[value],
-      leaderId: this.squad.leader,
-      followerId: this.squad.follower,
-      sceneId: this.squad.scene,
       snap: !!formData['snap-grid'],
       locks: {
-        planar: squadron.CONST[value].mode == 'static',
-        elevation: formData['elevation'] == 'offset',
+        elevation: formData['elevation'],
         follow: !!formData['no-pause']
       }
     }
-    
-    if (this.options.simulate) {
-      console.debug(squadron.EVENTS.addFollowerEvent, MODULE[NAME].addLeaderEvent, squadData);
-    } else {
-      /* trigger all relevant events */
-      warpgate.event.notify(squadron.EVENTS.addFollowerEvent, squadData);
-      warpgate.event.notify(squadron.EVENTS.addLeaderEvent, squadData);
-    }
+    this.close();
 
-    return eventData
+    /* confirmation info */
+    const confirmInfo = MODULE.format('feedback.pickConfirm', {leaderName: leaderToken.name, followerName: followerToken.name})
+    ui.notifications.info(confirmInfo);
+
+    return this.startFollow(squadData);
+  }
+
+  startFollow(squadData) {
+
+    return this.squad.followers.map( follower => {
+    
+      const eventData = foundry.utils.mergeObject(squadData, {
+        initiator: game.user.id,
+        leaderId: this.squad.leader,
+        followerId: follower,
+        sceneId: this.squad.scene,
+      }, {overwrite:false, inplace:false});
+
+      /* trigger all relevant events */
+      warpgate.event.notify(squadron.EVENTS.addFollowerEvent, eventData);
+      warpgate.event.notify(squadron.EVENTS.addLeaderEvent, eventData);
+
+      return eventData;
+    });
   }
 }

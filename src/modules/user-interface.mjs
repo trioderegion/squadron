@@ -1,11 +1,7 @@
-
-
 import { MODULE } from './module.mjs'
-import { Lookout } from './lookout.mjs'
 import { Logistics } from './logistics.mjs'
 import { logger } from './logger.mjs'
-
-const NAME = 'UserInterface';
+import Formation from '../apps/Formation';
 
 export class UserInterface {
 
@@ -170,24 +166,10 @@ export class UserInterface {
 
   static async _queryOrientationAndFollow(leaderToken, followerToken, allSelected = true) {
 
-    /* confirmation info */
-    const confirmInfo = MODULE.format('feedback.pickConfirm', {leaderName: leaderToken.name, followerName: followerToken.name})
-    ui.notifications.info(confirmInfo);
+    const followerGroup = allSelected ? canvas.tokens.controlled : [followerToken];
 
-    let eventData = {
-      orientationVector: squadron.CONST.QUERY
-    };
-
-    const followerGroup = allSelected ? canvas.tokens.controlled : followerToken;
-
-    for (const selected of followerGroup) {
-      if (!eventData) break;
-      eventData = await Lookout.addFollower(leaderToken.id, selected.id, selected.parent.id,
-        eventData.orientationVector, eventData.locks )
-    }
-
-    return eventData;
-
+    new Formation({leader:leaderToken.id, followers: followerGroup.map( t => t.id ), scene: leaderToken.parent.id}).render(true);
+    
   }
 
   /* UI Controls for switching to targeting,
@@ -197,7 +179,6 @@ export class UserInterface {
 
     const hud = followerToken.layer.hud;
 
-    // TODO
     const useCrosshairs = MODULE.setting('useCrosshairs');
 
     const askInfo = MODULE.format('feedback.pickAsk', {followerName: followerToken.name});

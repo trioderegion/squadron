@@ -3,10 +3,10 @@
   grid-gap: 5px;
   grid: 
     "header header header . common" 1fr
-    ". up . . common" 1fr
-    "left center right . elevation" 1fr
-    ". down . . elevation" 1fr
-    "normal follow mirror . elevation" 1fr
+    ".      up     .      . common" 1fr
+    "left   down   right  . elevation" 1fr
+    ".      .      .      . elevation" 10px
+    "follow center normal . elevation" 1fr
     / 1fr 1fr 1fr 10px 2fr;
 
   align-items:center;
@@ -35,5 +35,9 @@
   h2, h3 {
     margin:0;
     border:none;
+
+    i {
+      padding-left:5px;
+    }
   }
 }

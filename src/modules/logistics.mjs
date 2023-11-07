@@ -208,19 +208,17 @@ export class Logistics {
     const {angle, distance, dz, orientation} = delta; 
     let pos = {};
 
-    if (delta.orientation.mode == squadron.CONST.SHADOW.mode) {
-      pos = ['x','y','z'].reduce( (acc, curr) => {
-        if(!!forwardVector['d'+curr]) acc[curr] = token[curr] + orientation[curr] * forwardVector['d'+curr];
-        return acc;
-      }, {});
+    /* Compute X/Y depending on mode */
+    if (delta.orientation.mode == 'rel') {
+      pos.x = token.x + orientation.x * forwardVector.dx;
+      pos.y = token.y + orientation.y * forwardVector.dy;
     } else {
       const offsetAngle = forwardVector.angle;
 
       /* if planar locked preserve initial orientation */
-      const finalAngle = locks.planar ? (new Ray({x:0,y:0}, orientation)).angle + angle : offsetAngle + angle;
+      const finalAngle = delta.orientation.mode == 'static' ? (new Ray({x:0,y:0}, orientation)).angle + angle : offsetAngle + angle;
 
       const newLocation = Ray.fromAngle(origin.x, origin.y, finalAngle, distance);
-
 
       // give x/y if any 2d movement occured
       if (forwardVector.dx || forwardVector.dy){
@@ -228,9 +226,19 @@ export class Logistics {
         pos.y = newLocation.B.y + offset.y;
       }
 
-      //give elevation update only if elevation changed
-      if (forwardVector.dz) {
-        pos.elevation = locks.elevation ? origin.z + dz : forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
+    }
+
+    /* compute elevation change depending on its mode */
+    if (forwardVector.dz) {
+      switch (locks.elevation) {
+        case 'static':
+          break;
+        case 'offset':
+          pos.elevation = origin.z + dz;
+          break;
+        case 'tether':
+          pos.elevation = forwardVector.dz > 0 ? origin.z - dz : origin.z + dz
+          break;
       }
     }
 

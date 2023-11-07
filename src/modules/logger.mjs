@@ -25,23 +25,23 @@ import { MODULE } from './module.mjs'
 
 export class logger {
   static info(...args) {
-    console.log(`${MODULE?.data?.title || "" }  | `, ...args);
+    console.log(`%config.title%  | `, ...args);
   }
   
   // WARPGATE BEGIN
   static notify(...args) {
     logger.info(args);
-    ui.notifications.info(`${MODULE?.data?.title || "" } | ${args[0]}`);
+    ui.notifications.info(`%config.title% | ${args[0]}`);
   }
   // WARPGATE END
   
   static debug(...args) {
-    if (MODULE.setting('debug'))
+    if (game.settings.get('%config.id%','debug'))
       this.info("DEBUG | ", ...args);
   }
   static error(...args) {
-    console.error(`${MODULE?.data?.title || "" } | ERROR | `, ...args);
-    ui.notifications.error(`${MODULE?.data?.title || "" } | ERROR | ${args[0]}`);
+    console.error(`%config.title% | ERROR | `, ...args);
+    ui.notifications.error(`%config.title% | ERROR | ${args[0]}`);
   }
 
   static register(){
