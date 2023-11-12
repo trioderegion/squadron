@@ -1,4 +1,7 @@
-# Squadron
+<p align="center">
+<img src="https://storage.googleapis.com/badgerwerks/branding/squadron-badge-sm.webp" title="Warp Gate badge"><br>
+<img alt="GitHub all releases" src="https://img.shields.io/github/v/release/trioderegion/squadron?color=blue&label=release"> <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/downloads/trioderegion/squadron/latest/module.zip?color=blue&label=downloads%20%28latest%29">
+</p>
 
 A [Warp Gate](https://github.com/trioderegion/warpgate) pylon for formation, or marching order, management for Foundry VTT. Requires Warp Gate v1.19.0 or higher.
 
@@ -73,4 +76,10 @@ Signature: `async squadron.resume(tokenDocument)`
 
 Included with Squadron is `squadron.disband`, which will remove ALL squadron data from tokens on the current scene (default) or on ALL scenes with `squadron.disband(true)`. In the unlikely event that Squadron breaks down, garbage follower/leader data may be left on tokens and can be removed using this command.
 
-
+<p align="center">
+<em>Bundled with care by</em>
+<br>
+<a href="https://www.npmjs.com/package/rollup-config-badger-den">
+<img alt="built with Badger Den" src="https://storage.googleapis.com/badgerwerks/branding/badger-den-badge-sm.webp">
+</a>
+</p>
