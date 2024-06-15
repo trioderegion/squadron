@@ -135,21 +135,20 @@ export class Logistics {
     if (!token || !MODULE.isFirstOwner(token?.actor)) return;
 
     /* get our follower information */
-    const followerData = token.getFlag(MODULE.data.name, MODULE['Lookout']?.leadersFlag) ?? {};
+    const followerData = token.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
 
     const {delta: deltaInfo, locks, snap} = followerData[data.leader.tokenId];
 
     /* have i moved independently and am generally paused? */
-    const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    const paused = token.getFlag('%config.id%', MODULE.FLAG.paused);
 
     /* is this _specific_ leader marked as a persistent follow? */
     if (paused && !locks.follow) return;
 
     /* null delta means the leader thinks we are following, but are not */
     if (!deltaInfo){
-      logger.debug(`Leader ${data.leader.tokenId} thinks ${token.name} is following, but they disagree`);
-      warpgate.event.notify(MODULE['Lookout'].removeFollowerEvent,
-        {
+      //console.debug(`Leader ${data.leader.tokenId} thinks ${token.name} is following, but they disagree`);
+      MODULE.comms.emit(MODULE.EVENT.removeFollower, {
           leaderId: data.leader.tokenId,
           followerId,
           sceneId: data.sceneId
@@ -167,16 +166,16 @@ export class Logistics {
     }
 
     /* record last user in case of collision */
-    const user = token.getFlag(MODULE.data.name, MODULE['Lookout']?.lastUser) ?? {};
+    const user = token.getFlag('%config.id%', MODULE.FLAG.lastUser) ?? {};
 
     /* get follower token size offset (translates center to corner) */
     const offset = {x: -token.object.w/2, y: -token.object.h/2, z: 0};
     let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset, token);
-    mergeObject(position, {x: token.x, y: token.y}, {overwrite: false});
+    foundry.utils.mergeObject(position, {x: token.x, y: token.y}, {overwrite: false});
 
     /* snap to the grid if requested.*/
     if (snap) {
-      mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
+      foundry.utils.mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
     }
 
     /* check if we have moved -- i.e. on the 2d canvas */
@@ -250,6 +249,8 @@ export class Logistics {
   /* return {Promise} */
   static async handleLeaderMove(data) {
 
+    if (!this.containsOwnedFollower(eventData)) return;
+
     const updates = data.followers.map( element => Logistics._moveFollower( element, data ) );
     const moves = updates.reduce( (sum, curr) => {
       if (curr?.stop ?? true) return sum;
@@ -261,24 +262,31 @@ export class Logistics {
 
     for (const curr of updates) {
       if(curr?.stop) {
-        collisions.push({_id: curr.update._id, [`flags.${MODULE.data.name}.paused`]: true})
+        collisions.push({_id: curr.update._id, [`flags.%config.id%.${MODULE.FLAG.paused}`]: true})
 
         /* notify initiating owner of collision */
-        warpgate.event.notify(MODULE['Lookout'].notifyCollision, {tokenId: curr.update._id, tokenName: curr.name, user: curr.user} )
+          MODULE.comms.emit(MODULE.EVENT.notifyCollision, {
+            tokenId: curr.update._id,
+            tokenName: curr.name,
+            user: curr.user
+          })
       }
     }
     
-    logger.debug('moves', moves, 'collisions', collisions);
+    //console.debug('moves', moves, 'collisions', collisions);
 
-    await game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', collisions, {squadronEvent: MODULE['Lookout'].leaderMoveEvent});
+    await game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', collisions, {squadronEvent: MODULE.EVENT.leaderMove});
 
-    return game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', moves, {squadronEvent: MODULE['Lookout'].leaderMoveEvent})
+    return game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', moves, {squadronEvent: MODULE.EVENT.leaderMove})
   }
 
   static async handleRemoveFollower(eventData) {
+
+    if (!this.leaderFirstOwner(eventData)) return;
+
     const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
 
-    const leaderData = (leader.getFlag(MODULE.data.name, MODULE['Lookout'].followersFlag) ?? []);
+    const leaderData = (leader.getFlag('%config.id%', MODULE.FLAG.followers) ?? []);
 
     /* get new list of followers */
     const newData = leaderData.reduce( (sum, curr) => {
@@ -288,59 +296,67 @@ export class Logistics {
     }, []);
 
     if (newData.length > 0) {
-      await leader.setFlag(MODULE.data.name, MODULE['Lookout'].followersFlag, newData);
+      await leader.setFlag('%config.id%', MODULE.FLAG.followers, newData);
     } else {
       /* no more followers for this leader */
-      await leader.unsetFlag(MODULE.data.name, MODULE['Lookout'].followersFlag);
+      await leader.unsetFlag('%config.id%', MODULE.FLAG.followers);
     }
   }
 
   static announceStopFollow(tokenDoc) {
 
-    const leaders = tokenDoc.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {};
+    const leaders = tokenDoc.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
     if (Object.keys(leaders).length > 0){
 
-      logger.debug('Notifying leaders of follower remove. Follower:', tokenDoc, 'Leaders:', leaders);
+      //console.debug('Notifying leaders of follower remove. Follower:', tokenDoc, 'Leaders:', leaders);
       /* notify each leader that one of their followers is being removed */
       Object.keys(leaders).forEach( (leaderId) => {
-        warpgate.plugin.queueUpdate( () => {
-          return warpgate.event.notify(MODULE['Lookout'].removeFollowerEvent,
-            {
-              leaderId,
-              followerId: tokenDoc.id,
-              sceneId: tokenDoc.parent.id
-            });
-        });
-
+        MODULE.comms.emit(MODULE.EVENT.removeFollower,
+          {
+            leaderId,
+            followerId: tokenDoc.id,
+            sceneId: tokenDoc.parent.id
+          });
       });
 
     }
   }
 
   static async handleRemoveLeader(eventData) {
+
+    if (!this.followerFirstOwner(eventData)) return;
+
     const follower = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.followerId);
 
-    await follower.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
-    await follower.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    await follower.update({
+      [`flags.%config.id%.-=${MODULE.FLAG.leaders}`]: null,
+      [`flags.%config.id%.-=${MODULE.FLAG.paused}`]: null
+    });
+
   }
 
   
   /* leaderData = [follower ids] */
   static async handleAddFollower(eventData) {
+
+    if (!this.leaderFirstOwner(eventdata)) return;
     
     /* get the current follower flags */
     const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
-    let leaderData = duplicate(leader.getFlag(MODULE.data.name, MODULE['Lookout'].followersFlag) ?? []);
+    let leaderData = duplicate(leader.getFlag('%config.id%', MODULE.FLAG.followers) ?? []);
 
     /* are they already following? */
     if (leaderData.includes(eventData.followerId)) return; 
 
     leaderData.push(eventData.followerId);
 
-    await leader.setFlag(MODULE.data.name, MODULE['Lookout'].followersFlag, leaderData);
+    await leader.setFlag('%config.id%', MODULE.FLAG.followers, leaderData);
   }
 
   static async handleAddLeader(eventData) {
+
+    if (!this.followerFirstOwner(eventData)) return;
+
     const {leaderId, followerId, sceneId, orientationVector, locks, initiator, snap} = eventData;
 
     const scene = game.scenes.get(sceneId);
@@ -350,19 +366,19 @@ export class Logistics {
 
     const followerDelta = Logistics._calculateFollowerDelta(leaderToken.object, orientationVector, followerToken.object);
 
-    let currentFollowInfo = duplicate(followerToken.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {});
+    let currentFollowInfo = foundry.utils.duplicate(followerToken.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {});
 
     /* stamp in our new data */
     currentFollowInfo[leaderId] = { delta: followerDelta, locks, snap };
 
-    const squadron = {
-      [MODULE['Lookout'].leadersFlag] : currentFollowInfo,
-      [MODULE['Lookout'].followPause]: false,
-      [MODULE['Lookout'].lastUser]: initiator,
+    const flags = {
+      [MODULE.FLAG.leaders] : currentFollowInfo,
+      [MODULE.FLAG.paused]: false,
+      [MODULE.FLAG.lastUser]: initiator,
     }
 
     /* store the data */
-    await followerToken.update({'flags': {squadron}});
+    await followerToken.update({'flags.%config.id%': flags});
   }
 
   static _computeLeaderAngle(orientationVector) {
@@ -388,16 +404,16 @@ export class Logistics {
 
     if (global) {
       game.scenes.forEach( (scene) => {
-        warpgate.plugin.queueUpdate( () => { return Logistics._disbandScene(scene) } )
+        Logistics._disbandScene(scene);
       });
     } else {
-      warpgate.plugin.queueUpdate( () => { return Logistics._disbandScene(canvas.scene) });
+      return Logistics._disbandScene(canvas.scene);
     }
   }
 
   static _disbandScene(scene) {
-    const tokens = scene.getEmbeddedCollection('Token').filter( token => token.flags?.squadron );
-    const updates = tokens.map( (token) => {return { _id: token.id, 'flags.-=squadron':null}});
+    const tokens = scene.getEmbeddedCollection('Token').filter( token => token.flags?.['%config.id%'] );
+    const updates = tokens.map( (token) => {return { _id: token.id, 'flags.-=%config.id%':null}});
     return scene.updateEmbeddedDocuments('Token', updates);
   }
 }

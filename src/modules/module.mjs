@@ -1,31 +1,50 @@
-/** MIT (c) 2021 DnD5e Helpers */
+import Comms from "../lib/Comms";
 
-import { logger } from './logger.mjs';
+export class MODULE {
 
-const NAME = "squadron";
-const PATH = `/modules/${NAME}`;
+  /**
+   * Singleton socket manager
+   */
+  static comms = new Comms();
 
-export class MODULE{
-  static async register(){
-    logger.info("Initializing Module");
-    MODULE.settings();
-  }
+  /**
+   * Populated at runtime
+   */
+  static api = null;
+  static EVENT = Object.freeze({
+    leaderMove: "sq-leader-move",
+    followerPause: "sq-follow-pause",
+    addFollower: "sq-add-follower",
+    addLeader: "sq-add-leader",
+    removeFollower: "sq-remove-follower",
+    removeLeader: "sq-remove-leader",
+    notifyCollision: "sq-notify-collision",  
+  });
 
-  static async build(){
-    MODULE.data = { 
-      name: NAME,
-      path: PATH,
-      title: "Squadron"
-    };
-    logger.info("Module Data Built");
-  }
+  static CONST = Object.freeze({
+    LEFT: Object.freeze({x:1, y:0, mode:'vector'}),
+    UP: Object.freeze({x:0, y:-1, mode:'vector'}),
+    DOWN: Object.freeze({x:0, y:1, mode:'vector'}),
+    RIGHT: Object.freeze({x:-1, y:0, mode:'vector'}),
+    NONE: Object.freeze({x:0, y:0, mode:'static'}),
+    SHADOW: Object.freeze({x:-1, y:-1, z:-1, mode:'rel'}),
+    MIRROR: Object.freeze({x:1, y:1, z:1, mode:'rel'}),
+    QUERY: true,
+  })
 
-  static settings() {
+  static FLAG = Object.freeze({
+    followers: "followers",
+    leaders: "leaders",
+    paused: "paused",
+    lastUser: "user",
+  })
 
+  static register(){
+    comms.init();
   }
 
   static setting(key){
-    return game.settings.get(MODULE.data.name, key);
+    return game.settings.get('%config.id%', key);
   }
 
   static localize(moduleKey){
@@ -44,23 +63,10 @@ export class MODULE{
     return game.user.id === MODULE.firstGM()?.id;
   }
 
-  static async wait(ms){
-    return new Promise((resolve)=> setTimeout(resolve, ms))
-  }
-
-  static async waitFor(fn, m = 200, w = 100, i = 0){
-    while(!fn(i, ((i*w)/100)) && i < m){
-      i++;
-      await MODULE.wait(w);
-    }
-    return i === m ? false : true;
-  }
-
-
   static applySettings(settingsData){
     Object.entries(settingsData).forEach(([key, data])=> {
       game.settings.register(
-        MODULE.data.name, key, {
+        '%config.id%', key, {
           name : MODULE.localize(`setting.${key}.name`),
           hint : MODULE.localize(`setting.${key}.hint`),
           ...data

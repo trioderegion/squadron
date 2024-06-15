@@ -1,6 +1,5 @@
 import { MODULE } from './module.mjs'
 import { Logistics } from './logistics.mjs'
-import { logger } from './logger.mjs'
 import Formation from '../apps/Formation';
 
 export class UserInterface {
@@ -37,7 +36,7 @@ export class UserInterface {
     }
 
     /* which button should we show? */
-    const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    const paused = token.getFlag('%config.id%', MODULE.FLAG.paused);
     if (paused) {
 
       /* we are following, but have paused */
@@ -55,12 +54,6 @@ export class UserInterface {
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.leave'), 'fa-users-slash', 
         ()=>{ allSelected(UserInterface._stopFollow)});
     }
-  }
-
-  /* eventData: {tokenId, tokenName, user} */
-  static notifyCollision(eventData) {
-    if (!MODULE.setting('silentCollide'))
-    logger.notify(MODULE.format('feedback.wallCollision', {tokenId: eventData.tokenId, tokenName: eventData.tokenName}));
   }
 
   static _addHudButton(html, selectedToken, title, icon, clickEvent) {
@@ -82,7 +75,7 @@ export class UserInterface {
   }
 
   static async resume(followerToken) {
-    await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
+    await followerToken.setFlag('%config.id%', MODULE.FLAG.paused, false);
     if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
   }
 
