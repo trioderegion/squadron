@@ -125,7 +125,7 @@ export class Logistics {
     /* get our follower information */
     const followerData = token.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
 
-    const {delta: deltaInfo, locks, snap} = followerData[data.leader.tokenId];
+    const {delta: deltaInfo = null, locks, snap} = followerData[data.leader.tokenId];
 
     /* have i moved independently and am generally paused? */
     const paused = token.getFlag('%config.id%', MODULE.FLAG.paused);
