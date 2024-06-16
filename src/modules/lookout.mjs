@@ -148,14 +148,14 @@ export class Lookout {
 
   static async addFollower(
     leaderId,
-    followerId,
+    followerIds,
     sceneId,
     orientation = MODULE.CONST.QUERY,
     options = {}
   ) {
     const formation = new MODULE.api.Formation({
       leader: leaderId,
-      follower: followerId,
+      followers: followerIds,
       scene: sceneId,
     });
 
