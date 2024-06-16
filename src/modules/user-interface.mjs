@@ -12,9 +12,6 @@ export class UserInterface {
   static settings() {
     const config = true;
     const settingsData = {
-      useCrosshairs: {
-        scope: "client", config, default: true, type: Boolean
-      },
       silentCollide: {
         scope: "client", config, default: false, type: Boolean
       }

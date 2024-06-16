@@ -27,8 +27,13 @@ export class Logistics {
   static settings() {
     const config = true;
     const settingsData = {
-      collideWalls : {
-        scope: "world", config, default: false, type: Boolean,
+      collideWalls: {
+        scope: "world", config, default: 0, type: Number,
+        choices: {
+          0: "sqdrn.setting.collideWalls.cOff",
+          1: "sqdrn.setting.collideWalls.cPause",
+          2: "sqdrn.setting.collideWalls.cTeleport",
+        }
       },
     };
 
@@ -43,11 +48,6 @@ export class Logistics {
    *  "leader": {
    *      "tokenId": "br5CLQqneLsRA8dG",
    *      "sceneId": "kjgFSuEJMBUH0gq4",
-   *      "finalPosition": {
-   *          "x": 1350,
-   *          "y": 850,
-   *          "z": 0
-   *      },
    *      "followVector": {
    *          "A": {
    *              "x": 1350,
@@ -173,7 +173,7 @@ export class Logistics {
     /* if we should check for wall collisions, do that here */
     //Note: we can only check (currently) if the most senior owner is on
     //      the same scene as the event. 
-    if(MODULE.setting('collideWalls') && canvas.scene.id === data.leader.sceneId && isMove) {
+    if((MODULE.setting('collideWalls') > 0) && canvas.scene.id === data.leader.sceneId && isMove) {
       //get centerpoint offset
       const offset = {x: token.object.center.x - token.x, y: token.object.center.y - token.y};
       moveInfo.stop = Logistics._hasCollision([token.x+offset.x, token.y+offset.y, moveInfo.update.x+offset.x, moveInfo.update.y+offset.y]);
@@ -240,33 +240,46 @@ export class Logistics {
 
     if (!Logistics.containsOwnedFollower(eventData)) return;
 
+    const stopSetting = MODULE.setting('collideWalls') == 1;
     const updates = eventData.followers.map( element => Logistics._moveFollower( element, eventData ) );
-    const moves = updates.reduce( (sum, curr) => {
-      if (curr?.stop ?? true) return sum;
-      sum.push(curr.update);
-      return sum
-    }, []);
-
-    let collisions = [];
-
-    for (const curr of updates) {
-      if(curr?.stop) {
-        collisions.push({_id: curr.update._id, [`flags.%config.id%.${MODULE.FLAG.paused}`]: true})
-
-        /* notify initiating owner of collision */
-          MODULE.comms.emit(MODULE.EVENT.notifyCollision, {
-            tokenId: curr.update._id,
-            tokenName: curr.name,
-            user: curr.user
-          })
+    const sortedActions = updates.reduce( (acc, curr) => {
+      if (curr?.stop === false) {
+        acc.moves.push(curr.update);
+        return acc;
       }
+
+      if (curr?.stop === true) {
+        if (stopSetting) {
+          acc.stops.push({
+            _id: curr.update._id, 
+            [`flags.%config.id%.${MODULE.FLAG.paused}`]: true
+          });
+        } else{
+          acc.teleports.push({
+            ...curr.update,
+            x: eventData.leader.followVector.A.x + acc.teleports.length * 10,
+            y: eventData.leader.followVector.A.y + acc.teleports.length * 10,
+          });
+        }
+      }
+
+      return acc;
+    }, {moves: [], stops: [], teleports: []});
+
+    for (const curr of sortedActions.stops) {
+      /* notify initiating owner of collision */
+      await MODULE.comms.emit(MODULE.EVENT.notifyCollision, {
+        tokenId: curr.update._id,
+        tokenName: curr.name,
+        user: curr.user
+      })
     }
-    
-    //console.debug('moves', moves, 'collisions', collisions);
 
-    await game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', collisions, {squadronEvent: MODULE.EVENT.leaderMove});
+    await game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.stops, {squadronEvent: MODULE.EVENT.leaderMove});
 
-    return game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', moves, {squadronEvent: MODULE.EVENT.leaderMove})
+    await game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.teleports, {teleport: true, squadronEvent: MODULE.EVENT.leaderMove})
+
+    return game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.moves, {squadronEvent: MODULE.EVENT.leaderMove})
   }
 
   static async handleRemoveFollower(eventData) {

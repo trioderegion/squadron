@@ -63,16 +63,8 @@ export class Lookout {
     if (user != game.user.id) return;
 
     /* am I a leader? */
-    const followers =
-      tokenDoc.getFlag('%config.id%', MODULE.FLAG.followers) ?? [];
+    const followers = tokenDoc.getFlag('%config.id%', MODULE.FLAG.followers) ?? [];
     if (followers.length > 0) {
-      //console.debug(
-      //  "Notifying followers of leader remove. Leader:",
-      //  tokenDoc,
-      //  "Followers:",
-      //  followers
-      //);
-
       /* notify each follower that their leader is being removed */
       followers.forEach( followerId => MODULE.comms.emit(MODULE.EVENT.removeLeader, {
         leaderId: tokenDoc.id,
