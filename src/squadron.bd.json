@@ -1,18 +1,19 @@
 {
   "title": "Squadron",
   "description": "Quickly create marching orders or formations for your tokens. Easy jump in and out of your formation or halt others from following you.",
-  "version": "dev",
+  "version": "0.0.1",
   "entryPoints": {
     "main": "squadron.mjs",
-    "lang": "lang/*"
+    "lang": "lang/*",
+    "templates": "apps/*/*.hbs"
   },
-  "static": "*.hbs",
   "profile": {
     "dev": {
+      "version": "dev",
       "dest": "../dev",
       "hmr":true,
-      "compress": true,
-      "sourcemaps":true
+      "compress": false,
+      "sourcemaps": true
     },
     "release": {
       "dest": "../dist",
@@ -22,13 +23,9 @@
   },
   "dependencies": {
     "core": [
-      "11"
-    ],
-    "modules": {
-      "warpgate": [
-        "1.19.0"
-      ]
-    }
+      "11",
+      "12.327"
+    ]
   },
   "authors": [
     {

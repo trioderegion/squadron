@@ -5,8 +5,8 @@
       "formation": "Formation",
       "follow": "Follow",
       "config": {
-        "elevation": "Elevation Mode",
-        "snap": "Snap to Grid",
+        "elevation": "Elevation",
+        "snap": "Grid Snap",
         "nopause": "Never Pause"
       }
     },
@@ -15,7 +15,7 @@
       "offset": "Follower's relative elevation compared to their leader is preserved.",
       "static": "Follower's elevation is not affected by their leader. Useful for areas of effect or following a flying token.",
       "pinned": "Follower remains <q>pinned</q> in its initial orientation relative to their leader. Useful for <q>glueing</q> tokens together.",
-      "pulled": "Follower is <q>pulled</q> along in the same direction as their leader. Useful for riding vehicles.",
+      "pulled": "Follower shadows their leader's movements. Useful for riding vehicles or joining multiple tokens together.",
       "snap": "Follower is snapped to grid during movements.",
       "nopause": "Moving the follower token will not pause it from following their leader. Useful for riding vehicles.",
       "formation": "Keep the follower in their relative position (e.g. <q>behind</q> or <q>in front</q>) as the leader moves. Select the direction your leader is moving or the direction the formation is facing."

@@ -1,7 +1,6 @@
-import { logger } from './logger.mjs'
 import { MODULE } from './module.mjs'
 
-class FollowVector extends Ray {
+export class FollowVector extends Ray {
   constructor( A, B ) {
     super( A, B );
 
@@ -36,16 +35,6 @@ export class Logistics {
     MODULE.applySettings(settingsData);
   }
   
-  static createFollowVector(newLoc, oldLoc) {
-
-    /* vector is defined as origin at new location
-     * pointing towards oldLoc
-     */
-    const vector = new FollowVector(newLoc, oldLoc);
-    logger.debug('Follow Vector', vector);
-    return vector;
-  }
-
   /**
    *
    * @example
@@ -82,7 +71,6 @@ export class Logistics {
    *  "followers": [
    *      "o6jXMX22dnYljtVN"
    *  ],
-   *  "sceneId": "kjgFSuEJMBUH0gq4",
    *  "userId": "dZNkKae5pRvEOgcB"
    * }
    *```
@@ -95,7 +83,7 @@ export class Logistics {
      */
     const isOwner = eventData.followers.reduce( (sum, curr) => {
       if (sum) return sum;
-      const token = game.scenes.get(eventData.sceneId).getEmbeddedDocument("Token", curr);
+      const token = game.scenes.get(eventData.leader.sceneId).getEmbeddedDocument("Token", curr);
       if (!token) return sum;
       if (MODULE.isFirstOwner(token.actor)) return true;
       return sum;
@@ -131,7 +119,7 @@ export class Logistics {
   static _moveFollower( followerId, data ) {
 
     /* only handle *ours* no matter what anybody says */
-    const token = game.scenes.get(data.sceneId).getEmbeddedDocument("Token", followerId);
+    const token = game.scenes.get(data.leader.sceneId).getEmbeddedDocument("Token", followerId);
     if (!token || !MODULE.isFirstOwner(token?.actor)) return;
 
     /* get our follower information */
@@ -151,14 +139,14 @@ export class Logistics {
       MODULE.comms.emit(MODULE.EVENT.removeFollower, {
           leaderId: data.leader.tokenId,
           followerId,
-          sceneId: data.sceneId
+          sceneId: data.leader.sceneId
         });
 
       return;
     }
 
     /* from follow vector, calculate our new position */
-    let {followVector, finalPosition} = data.leader;
+    let {followVector} = data.leader;
 
     if ( !(followVector instanceof FollowVector) ){
       /* this was serialized from another client */
@@ -169,13 +157,12 @@ export class Logistics {
     const user = token.getFlag('%config.id%', MODULE.FLAG.lastUser) ?? {};
 
     /* get follower token size offset (translates center to corner) */
-    const offset = {x: -token.object.w/2, y: -token.object.h/2, z: 0};
-    let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset, token);
+    let position = Logistics._calculateNewPosition(followVector, deltaInfo, locks, token);
     foundry.utils.mergeObject(position, {x: token.x, y: token.y}, {overwrite: false});
 
     /* snap to the grid if requested.*/
     if (snap) {
-      foundry.utils.mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
+      foundry.utils.mergeObject(position, canvas.grid.getSnappedPoint(position, {mode: CONST.GRID_SNAPPING_MODES.TOP_LEFT_CORNER}));
     }
 
     /* check if we have moved -- i.e. on the 2d canvas */
@@ -186,7 +173,7 @@ export class Logistics {
     /* if we should check for wall collisions, do that here */
     //Note: we can only check (currently) if the most senior owner is on
     //      the same scene as the event. 
-    if(MODULE.setting('collideWalls') && canvas.scene.id === data.sceneId && isMove) {
+    if(MODULE.setting('collideWalls') && canvas.scene.id === data.leader.sceneId && isMove) {
       //get centerpoint offset
       const offset = {x: token.object.center.x - token.x, y: token.object.center.y - token.y};
       moveInfo.stop = Logistics._hasCollision([token.x+offset.x, token.y+offset.y, moveInfo.update.x+offset.x, moveInfo.update.y+offset.y]);
@@ -204,7 +191,8 @@ export class Logistics {
   }
 
   /* unit normal is forward */
-  static _calculateNewPosition(origin, forwardVector, delta, locks, offset, token){
+  static _calculateNewPosition(forwardVector, delta, locks, token){
+    const origin = forwardVector.A;
     const {angle, distance, dz, orientation} = delta; 
     let pos = {};
 
@@ -216,14 +204,15 @@ export class Logistics {
       const offsetAngle = forwardVector.angle;
 
       /* if planar locked preserve initial orientation */
-      const finalAngle = delta.orientation.mode == 'static' ? (new Ray({x:0,y:0}, orientation)).angle + angle : offsetAngle + angle;
+      const finalAngle = offsetAngle + angle;
 
       const newLocation = Ray.fromAngle(origin.x, origin.y, finalAngle, distance);
 
       // give x/y if any 2d movement occured
       if (forwardVector.dx || forwardVector.dy){
-        pos.x = newLocation.B.x + offset.x;
-        pos.y = newLocation.B.y + offset.y;
+        const {height, width} = token.object.getSize();
+        pos.x = newLocation.B.x - width/2;
+        pos.y = newLocation.B.y - height/2;
       }
 
     }
@@ -247,11 +236,11 @@ export class Logistics {
   }
 
   /* return {Promise} */
-  static async handleLeaderMove(data) {
+  static async handleLeaderMove(eventData) {
 
-    if (!this.containsOwnedFollower(eventData)) return;
+    if (!Logistics.containsOwnedFollower(eventData)) return;
 
-    const updates = data.followers.map( element => Logistics._moveFollower( element, data ) );
+    const updates = eventData.followers.map( element => Logistics._moveFollower( element, eventData ) );
     const moves = updates.reduce( (sum, curr) => {
       if (curr?.stop ?? true) return sum;
       sum.push(curr.update);
@@ -275,14 +264,14 @@ export class Logistics {
     
     //console.debug('moves', moves, 'collisions', collisions);
 
-    await game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', collisions, {squadronEvent: MODULE.EVENT.leaderMove});
+    await game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', collisions, {squadronEvent: MODULE.EVENT.leaderMove});
 
-    return game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', moves, {squadronEvent: MODULE.EVENT.leaderMove})
+    return game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', moves, {squadronEvent: MODULE.EVENT.leaderMove})
   }
 
   static async handleRemoveFollower(eventData) {
 
-    if (!this.leaderFirstOwner(eventData)) return;
+    if (!Logistics.leaderFirstOwner(eventData)) return;
 
     const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
 
@@ -303,6 +292,9 @@ export class Logistics {
     }
   }
 
+  /**
+   * @returns {Promise|undefined}
+   */
   static announceStopFollow(tokenDoc) {
 
     const leaders = tokenDoc.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
@@ -310,21 +302,21 @@ export class Logistics {
 
       //console.debug('Notifying leaders of follower remove. Follower:', tokenDoc, 'Leaders:', leaders);
       /* notify each leader that one of their followers is being removed */
-      Object.keys(leaders).forEach( (leaderId) => {
-        MODULE.comms.emit(MODULE.EVENT.removeFollower,
+      return Promise.all(Object.keys(leaders).map( (leaderId) => {
+        return MODULE.comms.emit(MODULE.EVENT.removeFollower,
           {
             leaderId,
             followerId: tokenDoc.id,
             sceneId: tokenDoc.parent.id
           });
-      });
+      }));
 
     }
   }
 
   static async handleRemoveLeader(eventData) {
 
-    if (!this.followerFirstOwner(eventData)) return;
+    if (!Logistics.followerFirstOwner(eventData)) return;
 
     const follower = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.followerId);
 
@@ -339,11 +331,11 @@ export class Logistics {
   /* leaderData = [follower ids] */
   static async handleAddFollower(eventData) {
 
-    if (!this.leaderFirstOwner(eventdata)) return;
+    if (!Logistics.leaderFirstOwner(eventData)) return;
     
     /* get the current follower flags */
     const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
-    let leaderData = duplicate(leader.getFlag('%config.id%', MODULE.FLAG.followers) ?? []);
+    let leaderData = foundry.utils.duplicate(leader.getFlag('%config.id%', MODULE.FLAG.followers) ?? []);
 
     /* are they already following? */
     if (leaderData.includes(eventData.followerId)) return; 
@@ -355,7 +347,7 @@ export class Logistics {
 
   static async handleAddLeader(eventData) {
 
-    if (!this.followerFirstOwner(eventData)) return;
+    if (!Logistics.followerFirstOwner(eventData)) return;
 
     const {leaderId, followerId, sceneId, orientationVector, locks, initiator, snap} = eventData;
 

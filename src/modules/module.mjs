@@ -26,7 +26,6 @@ export class MODULE {
     UP: Object.freeze({x:0, y:-1, mode:'vector'}),
     DOWN: Object.freeze({x:0, y:1, mode:'vector'}),
     RIGHT: Object.freeze({x:-1, y:0, mode:'vector'}),
-    NONE: Object.freeze({x:0, y:0, mode:'static'}),
     SHADOW: Object.freeze({x:-1, y:-1, z:-1, mode:'rel'}),
     MIRROR: Object.freeze({x:1, y:1, z:1, mode:'rel'}),
     QUERY: true,
@@ -40,7 +39,7 @@ export class MODULE {
   })
 
   static register(){
-    comms.init();
+    this.comms.init();
   }
 
   static setting(key){

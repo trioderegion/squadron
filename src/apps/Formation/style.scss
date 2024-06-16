@@ -2,15 +2,19 @@
   display:grid;
   grid-gap: 5px;
   grid: 
-    "header header header . common" 1fr
-    ".      up     .      . common" 1fr
-    "left   down   right  . elevation" 1fr
-    ".      .      .      . elevation" 10px
-    "follow center normal . elevation" 1fr
-    / 1fr 1fr 1fr 10px 2fr;
+    "header header header . common" auto
+    ".      up      .     . common" auto
+    "left   normal  right . elevation" auto
+    ".      down    .     . elevation" auto
+    / 1fr 1fr 1fr 5px 2fr;
 
   align-items:center;
   justify-items:center;
+
+  input[type="radio"] {
+    margin-top: 3px;
+    margin-bottom: 3px;
+  }
 
   img {
     border:none;
@@ -25,6 +29,7 @@
     display:inline-flex;
     align-items:center;
     justify-content: flex-start;
+    white-space: nowrap;
 
     input {
       position:static;

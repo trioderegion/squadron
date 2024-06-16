@@ -8,6 +8,6 @@
     "build": "rollup --config node:rollup-config-badger-den --config-den src/squadron:release"
   },
   "devDependencies": {
-    "rollup-config-badger-den": "^1.0.1"
+    "rollup-config-badger-den": "^1.3.0"
   }
 }

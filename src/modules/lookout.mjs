@@ -1,5 +1,5 @@
 import { MODULE } from "./module.mjs";
-import { Logistics } from "./logistics.mjs";
+import { Logistics, FollowVector } from "./logistics.mjs";
 
 export class Lookout {
   static register() {
@@ -93,18 +93,20 @@ export class Lookout {
     );
   }
 
-  static _getLocation(tokenDoc) {
+  static _getLocation(tokenDoc, changes = {}) {
+    const {width, height} = tokenDoc.object.getSize();
     return {
-      ...tokenDoc.object.center,
-      z: tokenDoc.elevation,
+      x: (changes.x ?? tokenDoc.x) + width/2,
+      y: (changes.y ?? tokenDoc.y) + height/2,
+      z: changes.elevation ?? tokenDoc.elevation,
     };
   }
 
   static _preUpdateToken(tokenDoc, update, options /*, user*/) {
     if (Lookout._shouldTrack(update)) {
       /* store 'old' location */
-      const oldLoc = Lookout._getLocation(tokenDoc);
-      foundry.utils.mergeObject(options, { oldLoc });
+      const loc = Lookout._getLocation(tokenDoc);
+      foundry.utils.mergeObject(options, { oldLoc: {[tokenDoc.id]: loc} });
     }
   }
 
@@ -118,17 +120,14 @@ export class Lookout {
         tokenDoc.getFlag('%config.id%', MODULE.FLAG.followers) ?? [];
 
       if (followers.length > 0) {
-        const oldLoc = options.oldLoc;
 
-        const newLoc = Lookout._getLocation(tokenDoc);
-
-        const followVector = Logistics.createFollowVector(newLoc, oldLoc);
+        const newLoc = Lookout._getLocation(tokenDoc, update);
+        const followVector = new FollowVector(newLoc, options.oldLoc[tokenDoc.id]);
 
         const data = {
           leader: {
             tokenId: tokenDoc.id,
             sceneId: tokenDoc.parent.id,
-            finalPosition: newLoc,
             followVector,
           },
           followers,

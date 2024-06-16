@@ -16,28 +16,22 @@
     class="fa-solid fa-arrow-right"
   ></i></button>
 
-<button style="grid-area:center;" data-tooltip="{{{localize 'sqdrn.tips.pinned'}}}" data-value="NONE"><i
-    class="fa-solid fa-thumbtack"
-  ></i></button>
-
-<h2 style="grid-area:follow;">{{localize 'sqdrn.app.follow'}}</h2>
-
 <button style="grid-area:normal" data-tooltip="{{{localize 'sqdrn.tips.pulled'}}}" data-value="SHADOW"><i
-    class="fa-solid fa-people-pulling"
+    class="fa-solid fa-ghost"
   ></i></button>
 
 <form class="flexcol" style="grid-area:elevation;">
   <h3>{{localize 'sqdrn.app.config.elevation'}}</h3>
-  <label>
-    <input type="radio" data-tooltip="{{{localize 'sqdrn.tips.tethered'}}}" checked value="tether" name="elevation" />
+  <label data-tooltip="{{{localize 'sqdrn.tips.tethered'}}}">
+    <input type="radio" checked value="tether" name="elevation" />
     {{localize 'sqdrn.elevation.tethered'}}
   </label>
-  <label>
-    <input type="radio" data-tooltip="{{{localize 'sqdrn.tips.offset'}}}" value="offset" name="elevation" />
+  <label data-tooltip="{{{localize 'sqdrn.tips.offset'}}}">
+    <input type="radio" value="offset" name="elevation" />
     {{localize 'sqdrn.elevation.offset'}}
   </label>
-  <label>
-    <input type="radio" data-tooltip="{{{localize 'sqdrn.tips.static'}}}" value="static" name="elevation" />
+  <label data-tooltip="{{{localize 'sqdrn.tips.static'}}}">
+    <input type="radio" value="static" name="elevation" />
     {{localize 'sqdrn.elevation.static'}}
   </label>
 </form>
