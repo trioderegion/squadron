@@ -1,7 +1,7 @@
 {
   "title": "Squadron",
   "description": "Quickly create marching orders or formations for your tokens. Easy jump in and out of your formation or halt others from following you.",
-  "version": "0.0.1",
+  "version": "4.0.0",
   "entryPoints": {
     "main": "squadron.mjs",
     "lang": "lang/*",
@@ -9,7 +9,6 @@
   },
   "profile": {
     "dev": {
-      "version": "dev",
       "dest": "../dev",
       "hmr":true,
       "compress": false,
@@ -23,7 +22,7 @@
   },
   "dependencies": {
     "core": [
-      "11",
+      "12",
       "12.327"
     ]
   },
