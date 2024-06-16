@@ -22,11 +22,7 @@ Most of the functionality of Squadron is contained within a button added to a to
 
 Clicking the "Pick Leader" button will prompt the user to click on the token they wish to follow. Once a leader has been selected, a dialog will appear that asks for the "formation direction" (as seen below).
 
-![Formation Direction](https://user-images.githubusercontent.com/14878515/135930980-6cde420d-69d5-4fda-a475-ee3e4efa0952.png)
-
-This dialog asks the user about how the formation is oriented, or in other words, which direction the leader is marching. For example, in the above picture, if I wanted the Follower token to be _behind_ the Leader token while marching, I would select "Right" as the direction. This indicates that the formation is moving to the right. If I instead wanted to walk side-by-side with the Leader token, I would select "Down" or "Up" depending on the exact side (left or right) of the Leader token I want to be on.  The video below illustrates the difference between a "Right" oriented formation and a "Down" oriented formation for the above example image.
-
-https://user-images.githubusercontent.com/14878515/135933778-17614e09-c5e5-4281-b154-427231c03055.mp4
+https://github.com/trioderegion/squadron/assets/14878515/2cbc815d-f077-4061-9369-460195eb3585
 
 ### Leave Formation
 
