@@ -3,12 +3,11 @@
 <img alt="GitHub all releases" src="https://img.shields.io/github/v/release/trioderegion/squadron?color=blue&label=release"> <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/downloads/trioderegion/squadron/latest/module.zip?color=blue&label=downloads%20%28latest%29">
 </p>
 
-Below is a demonstration of Squadron in action.
+**Below is a demonstration of Squadron in action.**
 
-https://user-images.githubusercontent.com/14878515/134452536-6e4b532e-5d03-4776-bc4c-5d02be79af46.mp4
+https://github.com/trioderegion/squadron/assets/14878515/2cbc815d-f077-4061-9369-460195eb3585
 
-Below is a demonstration of the, updated orientation options, and the elevation tracking options.
-
+**Below is a demonstration of the, updated orientation options, and the elevation tracking options.**
 
 https://user-images.githubusercontent.com/14878515/150623200-e4337094-cd21-43ad-827f-7d580e867fca.mp4
 
@@ -20,9 +19,7 @@ Most of the functionality of Squadron is contained within a button added to a to
 
 ![Pick Leader](https://user-images.githubusercontent.com/14878515/135930777-0ece6f75-026b-4f1b-a456-9e01d6d3d128.png)
 
-Clicking the "Pick Leader" button will prompt the user to click on the token they wish to follow. Once a leader has been selected, a dialog will appear that asks for the "formation direction" (as seen below).
-
-https://github.com/trioderegion/squadron/assets/14878515/2cbc815d-f077-4061-9369-460195eb3585
+Clicking the "Pick Leader" button will prompt the user to click on the token they wish to follow. Once a leader has been selected, a dialog will appear that asks for the "formation direction".
 
 ### Leave Formation
 
