@@ -5,8 +5,8 @@
       "formation": "Formation",
       "follow": "Follow",
       "config": {
-        "elevation": "Elevation Mode",
-        "snap": "Snap to Grid",
+        "elevation": "Elevation",
+        "snap": "Grid Snap",
         "nopause": "Never Pause"
       }
     },
@@ -14,8 +14,7 @@
       "tethered": "Follower's elevation is kept in formation with their leader.",
       "offset": "Follower's relative elevation compared to their leader is preserved.",
       "static": "Follower's elevation is not affected by their leader. Useful for areas of effect or following a flying token.",
-      "pinned": "Follower remains <q>pinned</q> in its initial orientation relative to their leader. Useful for <q>glueing</q> tokens together.",
-      "pulled": "Follower is <q>pulled</q> along in the same direction as their leader. Useful for riding vehicles.",
+      "pulled": "Follower shadows their leader's movements. Useful for riding vehicles or joining multiple tokens together.",
       "snap": "Follower is snapped to grid during movements.",
       "nopause": "Moving the follower token will not pause it from following their leader. Useful for riding vehicles.",
       "formation": "Keep the follower in their relative position (e.g. <q>behind</q> or <q>in front</q>) as the leader moves. Select the direction your leader is moving or the direction the formation is facing."
@@ -26,17 +25,12 @@
       "static": "Static"
     },
     "setting": {
-      "debug": {
-        "name": "Enable Debug Info",
-        "hint": "Logs additional debugging information to the console"
-      },
       "collideWalls": {
-        "name": "Respect Walls on Follow",
-        "hint": "Will check if the follower would collide with a wall when moving and will temporarily leave formation if this occurs. Reposition and rejoin formation to continue following."
-      },
-      "useCrosshairs": {
-        "name": "Use Crosshairs Targetting",
-        "hint": "Which method for leader selection to use: the built in targeting system or the Crosshairs targeting system."
+        "name": "Wall Collision Behavior",
+        "hint": "Determines how a follower token will respond to a movement blocker along their path.",
+        "cOff": "Ignore Walls",
+        "cPause": "Pause Following",
+        "cTeleport": "Teleport"
       },
       "silentCollide": {
         "name": "Suppress Collision Toasts",
@@ -52,7 +46,7 @@
       "pickAsk": "Please select the leader token for {followerName}",
       "pickTarget": "Please target (hotkey \"t\") the leader token for {followerName}",
       "pickConfirm": "{num} token(s) are now in formation.",
-      "wallCollision": "{tokenName}'s movement collides with a wall and has left formation. (Token [{tokenId}])"
+      "wallCollision": "{tokenName}'s movement collides with a wall and has left formation."
     },
     "orientation": {
       "title": "Select formation direction",

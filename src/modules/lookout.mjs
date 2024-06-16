@@ -1,84 +1,53 @@
 import { MODULE } from "./module.mjs";
-import { Logistics } from "./logistics.mjs";
-import { logger } from "./logger.mjs";
-import { UserInterface } from "./user-interface.mjs";
-import FormationApp from "../apps/Formation";
-
-const NAME = "Lookout";
+import { Logistics, FollowVector } from "./logistics.mjs";
 
 export class Lookout {
   static register() {
-    Lookout.defaults();
     Lookout.hooks();
-    Lookout.settings();
   }
 
   static hooks() {
-    /* delay until all modules loaded (i.e. warpgate) */
-    Hooks.once("ready", () => {
-      Hooks.on("preUpdateToken", Lookout._preUpdateToken);
-      Hooks.on("updateToken", Lookout._updateToken);
-      Hooks.on("deleteToken", Lookout._deleteToken);
-      Hooks.on("pasteToken", Lookout._pasteToken);
-      Hooks.on("preCreateToken", Lookout._preCreateToken);
+    Hooks.on("preUpdateToken", Lookout._preUpdateToken);
+    Hooks.on("updateToken", Lookout._updateToken);
+    Hooks.on("deleteToken", Lookout._deleteToken);
+    Hooks.on("pasteToken", Lookout._pasteToken);
+    Hooks.on("preCreateToken", Lookout._preCreateToken);
 
-      warpgate.event.watch(
-        MODULE[NAME].leaderMoveEvent,
-        Logistics.handleLeaderMove,
-        Logistics.containsOwnedFollower
-      );
+    MODULE.comms.on( 
+      MODULE.EVENT.leaderMove,
+      Logistics.handleLeaderMove,
+    );
 
-      warpgate.event.watch(
-        MODULE[NAME].addFollowerEvent,
-        Logistics.handleAddFollower,
-        Logistics.leaderFirstOwner
-      );
+    MODULE.comms.on(
+      MODULE.EVENT.addFollower,
+      Logistics.handleAddFollower
+    );
 
-      warpgate.event.watch(
-        MODULE[NAME].addLeaderEvent,
-        Logistics.handleAddLeader,
-        Logistics.followerFirstOwner
-      );
+    MODULE.comms.on(
+      MODULE.EVENT.addLeader,
+      Logistics.handleAddLeader
+    );
 
-      warpgate.event.watch(
-        MODULE[NAME].removeFollowerEvent,
-        Logistics.handleRemoveFollower,
-        Logistics.leaderFirstOwner
-      );
+    MODULE.comms.on(
+      MODULE.EVENT.removeFollower,
+      Logistics.handleRemoveFollower
+    );
 
-      warpgate.event.watch(
-        MODULE[NAME].removeLeaderEvent,
-        Logistics.handleRemoveLeader,
-        Logistics.followerFirstOwner
-      );
+    MODULE.comms.on(
+      MODULE.EVENT.removeLeader,
+      Logistics.handleRemoveLeader,
+    );
 
-      warpgate.event.watch(
-        MODULE[NAME].notifyCollision,
-        UserInterface.notifyCollision,
-        (data) => {
-          return data.user == game.user.id;
+    MODULE.comms.on(
+      MODULE.EVENT.notifyCollision,
+      (eventData) => {
+        if (eventData.user === game.user.id && !MODULE.setting('silentCollide')) {
+
+          ui.notifications.warn(MODULE.format('feedback.wallCollision', {tokenId: eventData.tokenId, tokenName: eventData.tokenName}));
         }
-      );
-    });
+      }
+    );
   }
-
-  static defaults() {
-    MODULE[NAME] = {
-      leaderMoveEvent: "sq-leader-move",
-      followerPauseEvent: "sq-follow-pause",
-      addFollowerEvent: "sq-add-follower",
-      addLeaderEvent: "sq-add-leader",
-      removeFollowerEvent: "sq-remove-follower",
-      removeLeaderEvent: "sq-remove-leader",
-      notifyCollision: "sq-notify-collision",
-      followersFlag: "followers",
-      leadersFlag: "leaders",
-      followPause: "paused",
-      lastUser: "user",
-    };
-  }
-
-  static settings() {}
 
   static _preCreateToken(token /*data, options*/) {
     token.updateSource({ "flags.-=squadron": null });
@@ -94,25 +63,14 @@ export class Lookout {
     if (user != game.user.id) return;
 
     /* am I a leader? */
-    const followers =
-      tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].followersFlag) ?? [];
+    const followers = tokenDoc.getFlag('%config.id%', MODULE.FLAG.followers) ?? [];
     if (followers.length > 0) {
-      logger.debug(
-        "Notifying followers of leader remove. Leader:",
-        tokenDoc,
-        "Followers:",
-        followers
-      );
       /* notify each follower that their leader is being removed */
-      followers.forEach((followerId) => {
-        warpgate.plugin.queueUpdate(() => {
-          return warpgate.event.notify(MODULE[NAME].removeLeaderEvent, {
-            leaderId: tokenDoc.id,
-            followerId,
-            sceneId: tokenDoc.parent.id,
-          });
-        });
-      });
+      followers.forEach( followerId => MODULE.comms.emit(MODULE.EVENT.removeLeader, {
+        leaderId: tokenDoc.id,
+        followerId,
+        sceneId: tokenDoc.parent.id,
+      }));
     }
 
     /* am I a follower? */
@@ -127,19 +85,20 @@ export class Lookout {
     );
   }
 
-  static _getLocation(tokenDoc) {
+  static _getLocation(tokenDoc, changes = {}) {
+    const {width, height} = MODULE.getSize(tokenDoc);
     return {
-      ...tokenDoc.object.center,
-      z: tokenDoc.elevation,
+      x: (changes.x ?? tokenDoc.x) + width/2,
+      y: (changes.y ?? tokenDoc.y) + height/2,
+      z: changes.elevation ?? tokenDoc.elevation,
     };
   }
 
   static _preUpdateToken(tokenDoc, update, options /*, user*/) {
     if (Lookout._shouldTrack(update)) {
       /* store 'old' location */
-      const oldLoc = Lookout._getLocation(tokenDoc);
-
-      mergeObject(options, { oldLoc });
+      const loc = Lookout._getLocation(tokenDoc);
+      foundry.utils.mergeObject(options, { oldLoc: {[tokenDoc.id]: loc} });
     }
   }
 
@@ -150,65 +109,57 @@ export class Lookout {
     if (Lookout._shouldTrack(update)) {
       /* am I a leader? */
       const followers =
-        tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].followersFlag) ?? [];
+        tokenDoc.getFlag('%config.id%', MODULE.FLAG.followers) ?? [];
 
       if (followers.length > 0) {
-        const oldLoc = options.oldLoc;
 
-        const newLoc = Lookout._getLocation(tokenDoc);
-
-        const followVector = Logistics.createFollowVector(newLoc, oldLoc);
+        const newLoc = Lookout._getLocation(tokenDoc, update);
+        const followVector = new FollowVector(newLoc, options.oldLoc[tokenDoc.id]);
 
         const data = {
           leader: {
             tokenId: tokenDoc.id,
             sceneId: tokenDoc.parent.id,
-            finalPosition: newLoc,
             followVector,
           },
           followers,
         };
 
-        warpgate.plugin.queueUpdate(async () => {
-          await warpgate.event.notify(MODULE[NAME].leaderMoveEvent, data);
-        });
+        MODULE.comms.emit(MODULE.EVENT.leaderMove, data);
       }
       // FOLLOWERS
-      if (options.squadronEvent == MODULE[NAME].leaderMoveEvent) {
+      if (options.squadronEvent == MODULE.EVENT.leaderMove) {
         /* do not respond to our own move events */
         return;
       }
 
       /* am I a follower? */
-      const leaders =
-        tokenDoc.getFlag(MODULE.data.name, MODULE[NAME].leadersFlag) ?? {};
+      const leaders = tokenDoc.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
       if (Object.keys(leaders).length > 0) {
         /* I am following someone and have moved independently of them -> Pause */
-        warpgate.plugin.queueUpdate(async () => {
-          await Lookout.pause(tokenDoc);
-        });
+        Lookout.pause(tokenDoc);
       }
     }
   }
 
   static async pause(tokenDoc) {
-    await tokenDoc.setFlag(MODULE.data.name, MODULE[NAME].followPause, true);
+    await tokenDoc.setFlag('%config.id%', MODULE.FLAG.paused, true);
   }
 
   static async addFollower(
     leaderId,
     followerId,
     sceneId,
-    orientation = squadron.CONST.QUERY,
+    orientation = MODULE.CONST.QUERY,
     options = {}
   ) {
-    const formation = new FormationApp({
+    const formation = new MODULE.api.Formation({
       leader: leaderId,
       follower: followerId,
       scene: sceneId,
     });
 
-    if (orientation === squadron.CONST.QUERY) {
+    if (orientation === MODULE.CONST.QUERY) {
       /* ask for orientation */
       return formation.render(true);
     }

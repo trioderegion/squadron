@@ -1,7 +1,6 @@
-import { logger } from './logger.mjs'
 import { MODULE } from './module.mjs'
 
-class FollowVector extends Ray {
+export class FollowVector extends Ray {
   constructor( A, B ) {
     super( A, B );
 
@@ -28,24 +27,19 @@ export class Logistics {
   static settings() {
     const config = true;
     const settingsData = {
-      collideWalls : {
-        scope: "world", config, default: false, type: Boolean,
+      collideWalls: {
+        scope: "world", config, default: 0, type: Number,
+        choices: {
+          0: "sqdrn.setting.collideWalls.cOff",
+          1: "sqdrn.setting.collideWalls.cPause",
+          2: "sqdrn.setting.collideWalls.cTeleport",
+        }
       },
     };
 
     MODULE.applySettings(settingsData);
   }
   
-  static createFollowVector(newLoc, oldLoc) {
-
-    /* vector is defined as origin at new location
-     * pointing towards oldLoc
-     */
-    const vector = new FollowVector(newLoc, oldLoc);
-    logger.debug('Follow Vector', vector);
-    return vector;
-  }
-
   /**
    *
    * @example
@@ -54,11 +48,6 @@ export class Logistics {
    *  "leader": {
    *      "tokenId": "br5CLQqneLsRA8dG",
    *      "sceneId": "kjgFSuEJMBUH0gq4",
-   *      "finalPosition": {
-   *          "x": 1350,
-   *          "y": 850,
-   *          "z": 0
-   *      },
    *      "followVector": {
    *          "A": {
    *              "x": 1350,
@@ -82,7 +71,6 @@ export class Logistics {
    *  "followers": [
    *      "o6jXMX22dnYljtVN"
    *  ],
-   *  "sceneId": "kjgFSuEJMBUH0gq4",
    *  "userId": "dZNkKae5pRvEOgcB"
    * }
    *```
@@ -95,7 +83,7 @@ export class Logistics {
      */
     const isOwner = eventData.followers.reduce( (sum, curr) => {
       if (sum) return sum;
-      const token = game.scenes.get(eventData.sceneId).getEmbeddedDocument("Token", curr);
+      const token = game.scenes.get(eventData.leader.sceneId).getEmbeddedDocument("Token", curr);
       if (!token) return sum;
       if (MODULE.isFirstOwner(token.actor)) return true;
       return sum;
@@ -131,35 +119,34 @@ export class Logistics {
   static _moveFollower( followerId, data ) {
 
     /* only handle *ours* no matter what anybody says */
-    const token = game.scenes.get(data.sceneId).getEmbeddedDocument("Token", followerId);
+    const token = game.scenes.get(data.leader.sceneId).getEmbeddedDocument("Token", followerId);
     if (!token || !MODULE.isFirstOwner(token?.actor)) return;
 
     /* get our follower information */
-    const followerData = token.getFlag(MODULE.data.name, MODULE['Lookout']?.leadersFlag) ?? {};
+    const followerData = token.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
 
-    const {delta: deltaInfo, locks, snap} = followerData[data.leader.tokenId];
+    const {delta: deltaInfo, locks, snap} = followerData[data.leader.tokenId] ?? {delta: null};
 
     /* have i moved independently and am generally paused? */
-    const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    const paused = token.getFlag('%config.id%', MODULE.FLAG.paused);
 
     /* is this _specific_ leader marked as a persistent follow? */
     if (paused && !locks.follow) return;
 
     /* null delta means the leader thinks we are following, but are not */
     if (!deltaInfo){
-      logger.debug(`Leader ${data.leader.tokenId} thinks ${token.name} is following, but they disagree`);
-      warpgate.event.notify(MODULE['Lookout'].removeFollowerEvent,
-        {
+      //console.debug(`Leader ${data.leader.tokenId} thinks ${token.name} is following, but they disagree`);
+      MODULE.comms.emit(MODULE.EVENT.removeFollower, {
           leaderId: data.leader.tokenId,
           followerId,
-          sceneId: data.sceneId
+          sceneId: data.leader.sceneId
         });
 
       return;
     }
 
     /* from follow vector, calculate our new position */
-    let {followVector, finalPosition} = data.leader;
+    let {followVector} = data.leader;
 
     if ( !(followVector instanceof FollowVector) ){
       /* this was serialized from another client */
@@ -167,16 +154,15 @@ export class Logistics {
     }
 
     /* record last user in case of collision */
-    const user = token.getFlag(MODULE.data.name, MODULE['Lookout']?.lastUser) ?? {};
+    const user = token.getFlag('%config.id%', MODULE.FLAG.lastUser) ?? {};
 
     /* get follower token size offset (translates center to corner) */
-    const offset = {x: -token.object.w/2, y: -token.object.h/2, z: 0};
-    let position = Logistics._calculateNewPosition(finalPosition, followVector, deltaInfo, locks, offset, token);
-    mergeObject(position, {x: token.x, y: token.y}, {overwrite: false});
+    let position = Logistics._calculateNewPosition(followVector, deltaInfo, locks, token);
+    foundry.utils.mergeObject(position, {x: token.x, y: token.y}, {overwrite: false});
 
     /* snap to the grid if requested.*/
     if (snap) {
-      mergeObject(position, canvas.grid.getSnappedPosition(position.x, position.y));
+      foundry.utils.mergeObject(position, token.parent.grid.getSnappedPoint(position, {mode: CONST.GRID_SNAPPING_MODES.TOP_LEFT_CORNER}));
     }
 
     /* check if we have moved -- i.e. on the 2d canvas */
@@ -187,7 +173,7 @@ export class Logistics {
     /* if we should check for wall collisions, do that here */
     //Note: we can only check (currently) if the most senior owner is on
     //      the same scene as the event. 
-    if(MODULE.setting('collideWalls') && canvas.scene.id === data.sceneId && isMove) {
+    if((MODULE.setting('collideWalls') > 0) && canvas.scene.id === data.leader.sceneId && isMove) {
       //get centerpoint offset
       const offset = {x: token.object.center.x - token.x, y: token.object.center.y - token.y};
       moveInfo.stop = Logistics._hasCollision([token.x+offset.x, token.y+offset.y, moveInfo.update.x+offset.x, moveInfo.update.y+offset.y]);
@@ -205,7 +191,8 @@ export class Logistics {
   }
 
   /* unit normal is forward */
-  static _calculateNewPosition(origin, forwardVector, delta, locks, offset, token){
+  static _calculateNewPosition(forwardVector, delta, locks, token){
+    const origin = forwardVector.A;
     const {angle, distance, dz, orientation} = delta; 
     let pos = {};
 
@@ -217,14 +204,15 @@ export class Logistics {
       const offsetAngle = forwardVector.angle;
 
       /* if planar locked preserve initial orientation */
-      const finalAngle = delta.orientation.mode == 'static' ? (new Ray({x:0,y:0}, orientation)).angle + angle : offsetAngle + angle;
+      const finalAngle = offsetAngle + angle;
 
       const newLocation = Ray.fromAngle(origin.x, origin.y, finalAngle, distance);
 
       // give x/y if any 2d movement occured
       if (forwardVector.dx || forwardVector.dy){
-        pos.x = newLocation.B.x + offset.x;
-        pos.y = newLocation.B.y + offset.y;
+        const {height, width} = MODULE.getSize(token);
+        pos.x = newLocation.B.x - width/2;
+        pos.y = newLocation.B.y - height/2;
       }
 
     }
@@ -248,37 +236,61 @@ export class Logistics {
   }
 
   /* return {Promise} */
-  static async handleLeaderMove(data) {
+  static async handleLeaderMove(eventData) {
 
-    const updates = data.followers.map( element => Logistics._moveFollower( element, data ) );
-    const moves = updates.reduce( (sum, curr) => {
-      if (curr?.stop ?? true) return sum;
-      sum.push(curr.update);
-      return sum
-    }, []);
+    if (!Logistics.containsOwnedFollower(eventData)) return;
 
-    let collisions = [];
-
-    for (const curr of updates) {
-      if(curr?.stop) {
-        collisions.push({_id: curr.update._id, [`flags.${MODULE.data.name}.paused`]: true})
-
-        /* notify initiating owner of collision */
-        warpgate.event.notify(MODULE['Lookout'].notifyCollision, {tokenId: curr.update._id, tokenName: curr.name, user: curr.user} )
+    const stopSetting = MODULE.setting('collideWalls') == 1;
+    const updates = eventData.followers.map( element => Logistics._moveFollower( element, eventData ) );
+    const leader = await fromUuid(`Scene.${eventData.leader.sceneId}.Token.${eventData.leader.tokenId}`);
+    const leaderSize = MODULE.getSize(leader);
+    const sortedActions = updates.reduce( (acc, curr) => {
+      if (curr?.stop === false) {
+        acc.moves.push(curr.update);
+        return acc;
       }
+
+      if (curr?.stop === true) {
+        if (stopSetting) {
+          acc.stops.push({
+            _id: curr.update._id, 
+            [`flags.%config.id%.${MODULE.FLAG.paused}`]: true
+          });
+        } else{
+          acc.teleports.push({
+            ...curr.update,
+            x: eventData.leader.followVector.A.x - leaderSize.width / 2 + 10 + acc.teleports.length * 10,
+            y: eventData.leader.followVector.A.y - leaderSize.height / 2 + 10 + acc.teleports.length * 10,
+          });
+        }
+      }
+
+      return acc;
+    }, {moves: [], stops: [], teleports: []});
+
+    for (const curr of sortedActions.stops) {
+      /* notify initiating owner of collision */
+      await MODULE.comms.emit(MODULE.EVENT.notifyCollision, {
+        tokenId: curr.update._id,
+        tokenName: curr.name,
+        user: curr.user
+      })
     }
-    
-    logger.debug('moves', moves, 'collisions', collisions);
 
-    await game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', collisions, {squadronEvent: MODULE['Lookout'].leaderMoveEvent});
+    await game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.stops, {squadronEvent: MODULE.EVENT.leaderMove});
 
-    return game.scenes.get(data.sceneId).updateEmbeddedDocuments('Token', moves, {squadronEvent: MODULE['Lookout'].leaderMoveEvent})
+    await game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.teleports, {teleport: true, squadronEvent: MODULE.EVENT.leaderMove})
+
+    return game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.moves, {squadronEvent: MODULE.EVENT.leaderMove})
   }
 
   static async handleRemoveFollower(eventData) {
+
+    if (!Logistics.leaderFirstOwner(eventData)) return;
+
     const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
 
-    const leaderData = (leader.getFlag(MODULE.data.name, MODULE['Lookout'].followersFlag) ?? []);
+    const leaderData = (leader.getFlag('%config.id%', MODULE.FLAG.followers) ?? []);
 
     /* get new list of followers */
     const newData = leaderData.reduce( (sum, curr) => {
@@ -288,59 +300,70 @@ export class Logistics {
     }, []);
 
     if (newData.length > 0) {
-      await leader.setFlag(MODULE.data.name, MODULE['Lookout'].followersFlag, newData);
+      await leader.setFlag('%config.id%', MODULE.FLAG.followers, newData);
     } else {
       /* no more followers for this leader */
-      await leader.unsetFlag(MODULE.data.name, MODULE['Lookout'].followersFlag);
+      await leader.unsetFlag('%config.id%', MODULE.FLAG.followers);
     }
   }
 
+  /**
+   * @returns {Promise|undefined}
+   */
   static announceStopFollow(tokenDoc) {
 
-    const leaders = tokenDoc.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {};
+    const leaders = tokenDoc.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
     if (Object.keys(leaders).length > 0){
 
-      logger.debug('Notifying leaders of follower remove. Follower:', tokenDoc, 'Leaders:', leaders);
+      //console.debug('Notifying leaders of follower remove. Follower:', tokenDoc, 'Leaders:', leaders);
       /* notify each leader that one of their followers is being removed */
-      Object.keys(leaders).forEach( (leaderId) => {
-        warpgate.plugin.queueUpdate( () => {
-          return warpgate.event.notify(MODULE['Lookout'].removeFollowerEvent,
-            {
-              leaderId,
-              followerId: tokenDoc.id,
-              sceneId: tokenDoc.parent.id
-            });
-        });
-
-      });
+      return Promise.all(Object.keys(leaders).map( (leaderId) => {
+        return MODULE.comms.emit(MODULE.EVENT.removeFollower,
+          {
+            leaderId,
+            followerId: tokenDoc.id,
+            sceneId: tokenDoc.parent.id
+          });
+      }));
 
     }
   }
 
   static async handleRemoveLeader(eventData) {
+
+    if (!Logistics.followerFirstOwner(eventData)) return;
+
     const follower = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.followerId);
 
-    await follower.unsetFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag);
-    await follower.unsetFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    await follower.update({
+      [`flags.%config.id%.-=${MODULE.FLAG.leaders}`]: null,
+      [`flags.%config.id%.-=${MODULE.FLAG.paused}`]: null
+    });
+
   }
 
   
   /* leaderData = [follower ids] */
   static async handleAddFollower(eventData) {
+
+    if (!Logistics.leaderFirstOwner(eventData)) return;
     
     /* get the current follower flags */
     const leader = game.scenes.get(eventData.sceneId).getEmbeddedDocument('Token', eventData.leaderId);
-    let leaderData = duplicate(leader.getFlag(MODULE.data.name, MODULE['Lookout'].followersFlag) ?? []);
+    let leaderData = foundry.utils.duplicate(leader.getFlag('%config.id%', MODULE.FLAG.followers) ?? []);
 
     /* are they already following? */
     if (leaderData.includes(eventData.followerId)) return; 
 
     leaderData.push(eventData.followerId);
 
-    await leader.setFlag(MODULE.data.name, MODULE['Lookout'].followersFlag, leaderData);
+    await leader.setFlag('%config.id%', MODULE.FLAG.followers, leaderData);
   }
 
   static async handleAddLeader(eventData) {
+
+    if (!Logistics.followerFirstOwner(eventData)) return;
+
     const {leaderId, followerId, sceneId, orientationVector, locks, initiator, snap} = eventData;
 
     const scene = game.scenes.get(sceneId);
@@ -350,19 +373,19 @@ export class Logistics {
 
     const followerDelta = Logistics._calculateFollowerDelta(leaderToken.object, orientationVector, followerToken.object);
 
-    let currentFollowInfo = duplicate(followerToken.getFlag(MODULE.data.name, MODULE['Lookout'].leadersFlag) ?? {});
+    let currentFollowInfo = foundry.utils.duplicate(followerToken.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {});
 
     /* stamp in our new data */
     currentFollowInfo[leaderId] = { delta: followerDelta, locks, snap };
 
-    const squadron = {
-      [MODULE['Lookout'].leadersFlag] : currentFollowInfo,
-      [MODULE['Lookout'].followPause]: false,
-      [MODULE['Lookout'].lastUser]: initiator,
+    const flags = {
+      [MODULE.FLAG.leaders] : currentFollowInfo,
+      [MODULE.FLAG.paused]: false,
+      [MODULE.FLAG.lastUser]: initiator,
     }
 
     /* store the data */
-    await followerToken.update({'flags': {squadron}});
+    await followerToken.update({'flags.%config.id%': flags});
   }
 
   static _computeLeaderAngle(orientationVector) {
@@ -388,16 +411,16 @@ export class Logistics {
 
     if (global) {
       game.scenes.forEach( (scene) => {
-        warpgate.plugin.queueUpdate( () => { return Logistics._disbandScene(scene) } )
+        Logistics._disbandScene(scene);
       });
     } else {
-      warpgate.plugin.queueUpdate( () => { return Logistics._disbandScene(canvas.scene) });
+      return Logistics._disbandScene(canvas.scene);
     }
   }
 
   static _disbandScene(scene) {
-    const tokens = scene.getEmbeddedCollection('Token').filter( token => token.flags?.squadron );
-    const updates = tokens.map( (token) => {return { _id: token.id, 'flags.-=squadron':null}});
+    const tokens = scene.getEmbeddedCollection('Token').filter( token => token.flags?.['%config.id%'] );
+    const updates = tokens.map( (token) => {return { _id: token.id, 'flags.-=%config.id%':null}});
     return scene.updateEmbeddedDocuments('Token', updates);
   }
 }

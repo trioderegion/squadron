@@ -58,7 +58,7 @@ export default class extends Application {
     }
 
     const squadData = {
-      orientationVector: squadron.CONST[value],
+      orientationVector: MODULE.CONST[value],
       snap: !!formData['snap-grid'],
       locks: {
         elevation: formData['elevation'],
@@ -70,23 +70,22 @@ export default class extends Application {
     return this.startFollow(squadData);
   }
 
-  startFollow(squadData) {
-
-    const data = this.squad.followers.map( follower => {
-    
+  async startFollow(squadData) {
+    const data = [];
+    for (const follower of this.squad.followers) {
       const eventData = foundry.utils.mergeObject(squadData, {
         initiator: game.user.id,
         leaderId: this.squad.leader,
         followerId: follower,
         sceneId: this.squad.scene,
-      }, {overwrite:false, inplace:false});
+      }, {overwrite: true, inplace: false});
 
       /* trigger all relevant events */
-      warpgate.event.notify(squadron.EVENTS.addFollowerEvent, eventData);
-      warpgate.event.notify(squadron.EVENTS.addLeaderEvent, eventData);
+      await MODULE.comms.emit(MODULE.EVENT.addFollower, eventData);
+      await MODULE.comms.emit(MODULE.EVENT.addLeader, eventData);
 
-      return eventData;
-    });
+      data.push(eventData);
+    }
 
     /* confirmation info */
     const confirmInfo = MODULE.format('feedback.pickConfirm', {num: data.length})

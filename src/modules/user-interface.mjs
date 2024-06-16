@@ -1,6 +1,5 @@
 import { MODULE } from './module.mjs'
 import { Logistics } from './logistics.mjs'
-import { logger } from './logger.mjs'
 import Formation from '../apps/Formation';
 
 export class UserInterface {
@@ -13,9 +12,6 @@ export class UserInterface {
   static settings() {
     const config = true;
     const settingsData = {
-      useCrosshairs: {
-        scope: "client", config, default: true, type: Boolean
-      },
       silentCollide: {
         scope: "client", config, default: false, type: Boolean
       }
@@ -37,7 +33,7 @@ export class UserInterface {
     }
 
     /* which button should we show? */
-    const paused = token.getFlag(MODULE.data.name, MODULE['Lookout'].followPause);
+    const paused = token.getFlag('%config.id%', MODULE.FLAG.paused);
     if (paused) {
 
       /* we are following, but have paused */
@@ -53,14 +49,8 @@ export class UserInterface {
 
       /* otherwise, we are following normally and have the option to stop */
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.leave'), 'fa-users-slash', 
-        ()=>{ allSelected(UserInterface._stopFollow)});
+        ()=>{ allSelected(UserInterface.stop)});
     }
-  }
-
-  /* eventData: {tokenId, tokenName, user} */
-  static notifyCollision(eventData) {
-    if (!MODULE.setting('silentCollide'))
-    logger.notify(MODULE.format('feedback.wallCollision', {tokenId: eventData.tokenId, tokenName: eventData.tokenName}));
   }
 
   static _addHudButton(html, selectedToken, title, icon, clickEvent) {
@@ -76,27 +66,21 @@ export class UserInterface {
   }
 
   static async stop(followerToken) {
-    Logistics.announceStopFollow(followerToken);
-    await followerToken.update({'flags.-=squadron': null});
+    await Logistics.announceStopFollow(followerToken);
+    await followerToken.update({'flags.-=%config.id%': null});
     if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
   }
 
   static async resume(followerToken) {
-    await followerToken.setFlag(MODULE.data.name, MODULE['Lookout'].followPause, false);
+    await followerToken.setFlag('%config.id%', MODULE.FLAG.paused, false);
     if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
   }
 
-  static _stopFollow(followerToken){
-    warpgate.plugin.queueUpdate( async () => {
-      await UserInterface.stop(followerToken);
-    });
-  }
-
+  /**
+   * @returns {Promise}
+   */
   static _resumeFollow(followerToken){
-
-    warpgate.plugin.queueUpdate( async () => {
-      await UserInterface.resume(followerToken);
-    });
+    return UserInterface.resume(followerToken);
   }
 
   static _toolTarget(followerToken) {
@@ -110,58 +94,19 @@ export class UserInterface {
         return;
       }
 
-      const eventData = await UserInterface._queryOrientationAndFollow(token.document, followerToken, true); 
+      UserInterface._queryOrientationAndFollow(token.document, followerToken, true); 
 
       /* remove targets */
       game.users.get(user.id).broadcastActivity({targets: []})
       game.user.updateTokenTargets();
 
-      return eventData;
     }
 
     /* register our target hook */
     Hooks.once('targetToken', onTarget);
   }
 
-  static async _crosshairsTarget(followerToken){
-
-    let targetToken = null;
-    while (!targetToken) {
-      const result = await warpgate.crosshairs.show({
-        drawIcon: false,
-        interval: 0,
-        lockSize: false,
-        size: 1.5,
-        rememberControlled: true,
-        fillColor: "#FF0000",
-        fillAlpha: 0.3
-      });
-
-      if ( result.cancelled ) return;
-
-      /* if we have some selected create a list of IDs to filter OUT of the collected tokens.
-       * We refuse to have a token follow itself
-       */
-      const selectedIds = canvas.tokens.controlled.map( t => t.id );
-
-      const tokens = warpgate.crosshairs.collect(result).filter( token => !selectedIds.includes(token.id) );
-
-      tokens.sort( (a, b,) => {
-        /* compute distance */
-        const distanceA = new Ray(followerToken.object.center, a.object.center).distance;
-        const distanceB = new Ray(followerToken.object.center, b.object.center).distance;
-
-        return distanceA < distanceB ? -1 : distanceA > distanceB ? 1 : 0;
-      });
-
-      targetToken = tokens[0];
-    }
-
-    return targetToken;
-
-  }
-
-  static async _queryOrientationAndFollow(leaderToken, followerToken, allSelected = true) {
+  static _queryOrientationAndFollow(leaderToken, followerToken, allSelected = true) {
 
     const followerGroup = allSelected ? canvas.tokens.controlled : [followerToken];
 
@@ -172,28 +117,14 @@ export class UserInterface {
   /* UI Controls for switching to targeting,
    * marking the leader, and notifying
    */
-  static async _targetLeader(followerToken) {
-
-    const hud = followerToken.layer.hud;
-
-    const useCrosshairs = MODULE.setting('useCrosshairs');
+  static _targetLeader(followerToken) {
 
     /* suppress the token hud */
+    const hud = followerToken.layer.hud;
     hud.clear();
 
-    if (useCrosshairs) {
-      
-      ui.notifications.info(MODULE.format('feedback.pickAsk', {followerName: followerToken.name}));
-      const targetToken = await UserInterface._crosshairsTarget(followerToken);
-
-      if (!targetToken) return;
-      
-      return UserInterface._queryOrientationAndFollow(targetToken, followerToken, true);
-
-    } else {
-      ui.notifications.info(MODULE.format('feedback.pickTarget', {followerName: followerToken.name}));
-      return UserInterface._toolTarget(followerToken);
-    }
+    ui.notifications.info(MODULE.format('feedback.pickTarget', {followerName: followerToken.name}));
+    return UserInterface._toolTarget(followerToken);
   }
 
 }
