@@ -86,7 +86,7 @@ export class Lookout {
   }
 
   static _getLocation(tokenDoc, changes = {}) {
-    const {width, height} = tokenDoc.object.getSize();
+    const {width, height} = MODULE.getSize(tokenDoc);
     return {
       x: (changes.x ?? tokenDoc.x) + width/2,
       y: (changes.y ?? tokenDoc.y) + height/2,

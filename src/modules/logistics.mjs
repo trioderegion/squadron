@@ -125,7 +125,7 @@ export class Logistics {
     /* get our follower information */
     const followerData = token.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
 
-    const {delta: deltaInfo = null, locks, snap} = followerData[data.leader.tokenId];
+    const {delta: deltaInfo, locks, snap} = followerData[data.leader.tokenId] ?? {delta: null};
 
     /* have i moved independently and am generally paused? */
     const paused = token.getFlag('%config.id%', MODULE.FLAG.paused);
@@ -162,7 +162,7 @@ export class Logistics {
 
     /* snap to the grid if requested.*/
     if (snap) {
-      foundry.utils.mergeObject(position, canvas.grid.getSnappedPoint(position, {mode: CONST.GRID_SNAPPING_MODES.TOP_LEFT_CORNER}));
+      foundry.utils.mergeObject(position, token.parent.grid.getSnappedPoint(position, {mode: CONST.GRID_SNAPPING_MODES.TOP_LEFT_CORNER}));
     }
 
     /* check if we have moved -- i.e. on the 2d canvas */
@@ -210,7 +210,7 @@ export class Logistics {
 
       // give x/y if any 2d movement occured
       if (forwardVector.dx || forwardVector.dy){
-        const {height, width} = token.object.getSize();
+        const {height, width} = MODULE.getSize(token);
         pos.x = newLocation.B.x - width/2;
         pos.y = newLocation.B.y - height/2;
       }
@@ -242,6 +242,8 @@ export class Logistics {
 
     const stopSetting = MODULE.setting('collideWalls') == 1;
     const updates = eventData.followers.map( element => Logistics._moveFollower( element, eventData ) );
+    const leader = await fromUuid(`Scene.${eventData.leader.sceneId}.Token.${eventData.leader.tokenId}`);
+    const leaderSize = MODULE.getSize(leader);
     const sortedActions = updates.reduce( (acc, curr) => {
       if (curr?.stop === false) {
         acc.moves.push(curr.update);
@@ -257,8 +259,8 @@ export class Logistics {
         } else{
           acc.teleports.push({
             ...curr.update,
-            x: eventData.leader.followVector.A.x + acc.teleports.length * 10,
-            y: eventData.leader.followVector.A.y + acc.teleports.length * 10,
+            x: eventData.leader.followVector.A.x - leaderSize.width / 2 + 10 + acc.teleports.length * 10,
+            y: eventData.leader.followVector.A.y - leaderSize.height / 2 + 10 + acc.teleports.length * 10,
           });
         }
       }

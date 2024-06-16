@@ -62,6 +62,20 @@ export class MODULE {
     return game.user.id === MODULE.firstGM()?.id;
   }
 
+  static getSize(tokenDoc) {
+    if (tokenDoc.object) return tokenDoc.object.getSize();
+    
+    let {width, height} = tokenDoc;
+    const grid = tokenDoc.parent.grid;
+    if ( grid.isHexagonal ) {
+      if ( grid.columns ) width = (0.75 * Math.floor(width)) + (0.5 * (width % 1)) + 0.25;
+      else height = (0.75 * Math.floor(height)) + (0.5 * (height % 1)) + 0.25;
+    }
+    width *= grid.sizeX;
+    height *= grid.sizeY;
+    return {width, height};
+  }
+
   static applySettings(settingsData){
     Object.entries(settingsData).forEach(([key, data])=> {
       game.settings.register(
