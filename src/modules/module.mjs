@@ -28,6 +28,7 @@ export class MODULE {
     RIGHT: Object.freeze({x:-1, y:0, mode:'vector'}),
     SHADOW: Object.freeze({x:-1, y:-1, z:-1, mode:'rel'}),
     MIRROR: Object.freeze({x:1, y:1, z:1, mode:'rel'}),
+    DETECT: Object.freeze({x: 0, y: 0, z: 0, mode: 'detect'}),
     QUERY: true,
   })
 

@@ -1,8 +1,17 @@
-import { MODULE } from './module.mjs'
-import { Logistics } from './logistics.mjs'
+import './user-interface.scss';
+
+import { MODULE } from './module.mjs';
+import { Logistics } from './logistics.mjs';
 import Formation from '../apps/Formation';
 
 export class UserInterface {
+
+  static _dragDrop = new DragDrop({
+    dragSelector: '.control-icon.%config.id%', 
+    callbacks: {
+      dragstart: this._onDragStart,
+    },
+  });
 
   static register() {
     this.settings();
@@ -21,7 +30,8 @@ export class UserInterface {
   }
 
   static hooks(){
-    Hooks.on('renderTokenHUD', UserInterface._renderTokenHUD);
+    Hooks.on('renderTokenHUD', this._renderTokenHUD);
+    Hooks.on('dropCanvasData', this._onCanvasDrop);
   }
 
   static _renderTokenHUD(app, html/*, data*/){
@@ -44,7 +54,8 @@ export class UserInterface {
       /* if the pause flag doesnt exist, we arent following anyone */
       /* special handling of multi-selected for this one, dont use helper */
       UserInterface._addHudButton(html, token, MODULE.localize('workflow.pick'), 'fa-users',
-        () => { UserInterface._targetLeader(token)})
+        () => { UserInterface._targetLeader(token)});
+      UserInterface._dragDrop.bind(html[0]);
     } else {
 
       /* otherwise, we are following normally and have the option to stop */
@@ -56,13 +67,89 @@ export class UserInterface {
   static _addHudButton(html, selectedToken, title, icon, clickEvent) {
 
     if (!selectedToken) return;
+    
+    const button = new DocumentFragment();
+    button.append(document.createElement('div'))
+    button.firstElementChild.classList.add('control-icon', '%config.id%');
+    button.firstElementChild.dataset.tooltip = title;
 
-    const button = $(`<div class="control-icon squadron" title="${title}"><i class="fas ${icon}"></i></div>`);
+    const iconElement = document.createElement('i');
+    iconElement.classList.add('fas', icon);
+    button.firstElementChild.append(iconElement);
 
-    button.on('mouseup', clickEvent );
+    button.firstElementChild.addEventListener('click', clickEvent);
+    html[0].querySelector('.col.left').append(button);
+  }
 
-    const column = '.col.left';
-    html.find(column).append(button);
+  static _shrinkHUD(hud) {
+    if (!hud) return;
+    hud.element[0].style.transition = 'scale 0.5s';
+    hud.element[0].style.transformOrigin = 'center';
+    hud.element[0].style.scale = 0.5;
+  }
+
+  static _restoreHUD(hud) {
+    if (!hud) return;
+    hud.element[0].style.transformOrigin = 'inherit';
+    hud.element[0].style.scale = 'inherit';
+    hud.element[0].style.transition = 'inherit';
+  }
+
+  static _onDragStart(evt) {
+    const dragData = {
+      type: '%config.id%/target',
+      selected: canvas.tokens.controlled.map( t => t.id ),
+      alt: evt.altKey,
+      ctrl: evt.ctrlKey,
+    }
+    evt.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    UserInterface._shrinkHUD(canvas.tokens.hud);
+  }
+
+  static _onCanvasDrop(canvas, {type, selected = [], x, y, alt, ctrl}) {
+    if (type !== '%config.id%/target' || selected?.length == 0) return;
+
+    UserInterface._restoreHUD(canvas.tokens.hud);
+
+    /* create 20x20 target area to find placeables */
+    let targets = [];
+    const hitArea = new PIXI.Rectangle(x - 10, y - 10, 20, 20)
+    for (const token of canvas.tokens.placeables.filter(t => t.isVisible && !selected.includes(t.id))) {
+      if (token._overlapsSelection(hitArea)) targets.push(token);
+    }
+    targets.sort( (left, right) => left.document.sort > right.document.sort ? -1 : left.document.sort < right.document.sort ? 1 : 0);
+    
+    if (targets.length > 0) {
+      const formation = new Formation({
+        leader: targets.at(0).id,
+        followers: selected,
+        scene: canvas.scene.id
+      });
+
+      if (alt) {
+        formation.render(true);
+      } else if (ctrl) {
+        formation.startFollow({
+          orientationVector: MODULE.CONST.SHADOW,
+          snap: false,
+          locks: {
+            elevation: 'offset', 
+            follow: true,
+          }
+        });
+      } else {
+          formation.startFollow({
+            orientationVector: MODULE.CONST.DETECT,
+            snap: true,
+            locks: {
+              elevation: 'tether',
+              follow: false,
+            }
+          });
+      }
+    }
+
+    return false;
   }
 
   static async stop(followerToken) {
@@ -83,17 +170,25 @@ export class UserInterface {
     return UserInterface.resume(followerToken);
   }
 
+  static _hookID = null;
+
   static _toolTarget(followerToken) {
+
+    const hud = followerToken.layer.hud;
+
     /* use targeting tool */
     const onTarget = async (user, token, active) => {
+
+      /* we are deslecting something, keep ourselves active
+       * or someone else has targeted something
+       */
       if(!active || user.id !== game.user.id){
-        /* we are deslecting something, keep ourselves active
-         * or someone else has targeted something
-         */
-        Hooks.once('targetToken', onTarget);
         return;
       }
 
+      Hooks.off('targetToken', onTarget);
+      UserInterface._hookID = null;
+      UserInterface._restoreHUD(hud);
       UserInterface._queryOrientationAndFollow(token.document, followerToken, true); 
 
       /* remove targets */
@@ -102,8 +197,11 @@ export class UserInterface {
 
     }
 
+    /* suppress the token hud */
+    UserInterface._shrinkHUD(hud)
+
     /* register our target hook */
-    Hooks.once('targetToken', onTarget);
+    if (!UserInterface._hookID) UserInterface._hookID = Hooks.on('targetToken', onTarget);
   }
 
   static _queryOrientationAndFollow(leaderToken, followerToken, allSelected = true) {
@@ -118,10 +216,6 @@ export class UserInterface {
    * marking the leader, and notifying
    */
   static _targetLeader(followerToken) {
-
-    /* suppress the token hud */
-    const hud = followerToken.layer.hud;
-    hud.clear();
 
     ui.notifications.info(MODULE.format('feedback.pickTarget', {followerName: followerToken.name}));
     return UserInterface._toolTarget(followerToken);

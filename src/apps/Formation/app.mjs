@@ -17,6 +17,8 @@ export default class extends Application {
     });
   }
 
+  
+
   constructor({leader = null, followers = [], scene = null}, options = {}) {
     super(options);
 
@@ -27,6 +29,10 @@ export default class extends Application {
     }
 
     this.squad = {leader, followers, scene};
+  }
+
+  get leader() {
+    return game.scenes.get(this.squad.scene).tokens.get(this.squad.leader);
   }
 
   activateListeners(html) {
@@ -65,12 +71,24 @@ export default class extends Application {
         follow: !!formData['no-pause']
       }
     }
+    
     this.close();
 
     return this.startFollow(squadData);
   }
 
   async startFollow(squadData) {
+    if (squadData.orientationVector.mode === 'detect') {
+      const tRot = this.leader?.rotation; 
+      const tRay = Ray.fromAngle(0,0, Math.toRadians(tRot + 90), 1);
+      squadData.orientationVector = {
+        mode: 'vector',
+        x: Math.abs(tRay.dx < 1e-10) ? 0 : -tRay.B.x,
+        y: Math.abs(tRay.dy < 1e-10) ? 0 : tRay.B.y,
+      }
+    } 
+
+
     const data = [];
     for (const follower of this.squad.followers) {
       const eventData = foundry.utils.mergeObject(squadData, {
@@ -88,7 +106,8 @@ export default class extends Application {
     }
 
     /* confirmation info */
-    const confirmInfo = MODULE.format('feedback.pickConfirm', {num: data.length})
+    const type = squadData.orientationVector.mode === 'vector' ? 'formation' : 'follow';
+    const confirmInfo = MODULE.format(`feedback.pickConfirm.${type}`, {num: data.length})
     ui.notifications.info(confirmInfo);
 
     return data;

@@ -79,9 +79,10 @@ export class Lookout {
 
   static _shouldTrack(change) {
     return (
-      typeof change.x === "number" ||
-      typeof change.y === "number" ||
-      typeof change.elevation === "number"
+      typeof change.x === "number"
+      || typeof change.y === "number"
+      || typeof change.elevation === "number"
+      || typeof change.rotation === "number"
     );
   }
 
@@ -91,6 +92,7 @@ export class Lookout {
       x: (changes.x ?? tokenDoc.x) + width/2,
       y: (changes.y ?? tokenDoc.y) + height/2,
       z: changes.elevation ?? tokenDoc.elevation,
+      t: Math.toRadians((changes.rotation ?? tokenDoc.rotation) - 90),
     };
   }
 
@@ -115,7 +117,7 @@ export class Lookout {
 
         const newLoc = Lookout._getLocation(tokenDoc, update);
         const followVector = new FollowVector(newLoc, options.oldLoc[tokenDoc.id]);
-
+        console.log('old', options.oldLoc[tokenDoc.id], 'new', newLoc, 'vector', followVector);
         const data = {
           leader: {
             tokenId: tokenDoc.id,
