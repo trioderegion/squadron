@@ -1,0 +1,66 @@
+{
+  "sqdrn": {
+    "app": {
+      "title": "Configuración del escuadrón",
+      "formation": "Formación",
+      "link": "Enlace",
+      "config": {
+        "elevation": "Elevación",
+        "snap": "Ajuste de cuadrícula",
+        "nopause": "Nunca pausar"
+      }
+    },
+    "tips": {
+      "tethered": "La elevación del seguidor se mantiene en formación con su líder.",
+      "offset": "Se conserva la elevación relativa del seguidor en comparación con su líder.",
+      "static": "La elevación del seguidor no se ve afectada por su líder. ",
+      "snap": "El seguidor se ajusta a la cuadrícula durante los movimientos.",
+      "nopause": "Mover la ficha de seguidor no impedirá que siga a su líder. ",
+      "formation": "Utilice los botones de flecha para seleccionar la dirección de esta formación.<hr><p style='font-size:smaller;'>El modo de formación mantiene al seguidor en esta orientación relativa mientras su líder se mueve.</p>",
+      "link": "Montar, montar o vincular tokens entre sí.<hr><p style='font-size:smaller'>El modo vinculado refleja los movimientos de sus líderes y mantiene su posición relativa durante las rotaciones.</p>",
+      "detect": "Derivar la dirección de la formación a partir de la orientación del líder."
+    },
+    "elevation": {
+      "tethered": "atado",
+      "offset": "Compensar",
+      "static": "Estático"
+    },
+    "setting": {
+      "collideWalls": {
+        "name": "Comportamiento de colisión con la pared",
+        "hint": "Determina cómo responderá una ficha de seguidor a un bloqueador de movimiento a lo largo de su camino.",
+        "cOff": "Ignorar paredes",
+        "cPause": "Pausar siguiendo",
+        "cTeleport": "Teletransportarse"
+      },
+      "silentCollide": {
+        "name": "Suprimir brindis de colisión",
+        "hint": "Elimina la notificación que indica que una ficha de tu propiedad chocó con una pared y dejó de seguir a su líder."
+      }
+    },
+    "workflow": {
+      "pick": "Elige líder de escuadrón<hr><p style='font-size:smaller'><strong>Arrastrar:</strong> Modo de formación</p><p style='font-size:smaller'><strong>Ctrl-Arrastrar:</strong> Modo vinculado</p><p style='font-size:smaller'><strong>Alt-arrastrar:</strong> Configuración avanzada</p>",
+      "rejoin": "Reincorporarse a la formación",
+      "leave": "Dejar la formación"
+    },
+    "feedback": {
+      "pickTarget": "Apunte (tecla de acceso rápido \"t\") a la ficha de líder de este escuadrón.",
+      "pickConfirm": {
+        "formation": "{num} ficha(s) ahora están en formación con el objetivo.",
+        "follow": "{num} token(s) ahora se están moviendo junto con el objetivo."
+      },
+      "wallCollision": "El movimiento de {tokenName} choca contra una pared y ha abandonado la formación."
+    },
+    "orientation": {
+      "title": "Seleccionar dirección de formación",
+      "snapLabel": "Ajustar a cuadrícula",
+      "lockElevation": "Elevación de bloqueo",
+      "persistLabel": "Seguir siempre",
+      "none": "Ninguno",
+      "up": "Arriba",
+      "down": "Abajo",
+      "left": "Izquierda",
+      "right": "Bien"
+    }
+  }
+}

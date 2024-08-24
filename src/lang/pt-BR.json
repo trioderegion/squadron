@@ -1,0 +1,66 @@
+{
+  "sqdrn": {
+    "app": {
+      "title": "Configuração do Esquadrão",
+      "formation": "Formação",
+      "link": "Link",
+      "config": {
+        "elevation": "Elevação",
+        "snap": "Ajuste à grade",
+        "nopause": "Nunca pause"
+      }
+    },
+    "tips": {
+      "tethered": "A elevação do seguidor é mantida em formação com seu líder.",
+      "offset": "A elevação relativa do seguidor em relação ao seu líder é preservada.",
+      "static": "A elevação do seguidor não é afetada pelo seu líder. ",
+      "snap": "O seguidor é ajustado à grade durante os movimentos.",
+      "nopause": "Mover o token de seguidor não o impedirá de seguir seu líder. ",
+      "formation": "Use os botões de seta para selecionar a direção desta formação.<hr><p style='font-size:smaller;'>O modo de formação mantém o seguidor nesta orientação relativa enquanto o líder se move.</p>",
+      "link": "Monte, monte ou vincule tokens de outra forma.<hr><p style='font-size:smaller'>O modo vinculado reflete os movimentos de seus líderes e mantém sua posição relativa durante as rotações.</p>",
+      "detect": "Derive a direção da formação a partir da orientação do líder."
+    },
+    "elevation": {
+      "tethered": "Amarrado",
+      "offset": "Desvio",
+      "static": "Estático"
+    },
+    "setting": {
+      "collideWalls": {
+        "name": "Comportamento de colisão de parede",
+        "hint": "Determina como um token seguidor responderá a um bloqueador de movimento ao longo de seu caminho.",
+        "cOff": "Ignorar paredes",
+        "cPause": "Pausar seguindo",
+        "cTeleport": "Teleporte"
+      },
+      "silentCollide": {
+        "name": "Suprimir brindes de colisão",
+        "hint": "Remova a notificação indicando que um token que você possui colidiu com uma parede e parou de seguir seu líder."
+      }
+    },
+    "workflow": {
+      "pick": "Escolha o líder do esquadrão<hr><p style='font-size:smaller'><strong>Arrastar:</strong> Modo de formação</p><p style='font-size:smaller'><strong>Ctrl-Arrastar:</strong> Modo vinculado</p><p style='font-size:smaller'><strong>Alt-Arrastar:</strong> Configuração avançada</p>",
+      "rejoin": "Reingressar na formação",
+      "leave": "Sair da formação"
+    },
+    "feedback": {
+      "pickTarget": "Por favor, direcione (tecla de atalho \"t\") o token de líder deste esquadrão.",
+      "pickConfirm": {
+        "formation": "{num} token(s) agora estão em formação com o alvo.",
+        "follow": "{num} token(s) agora estão se movendo junto com o alvo."
+      },
+      "wallCollision": "O movimento de {tokenName} colide com uma parede e sai da formação."
+    },
+    "orientation": {
+      "title": "Selecione a direção da formação",
+      "snapLabel": "Ajustar à grade",
+      "lockElevation": "Elevação de bloqueio",
+      "persistLabel": "Sempre siga",
+      "none": "Nenhum",
+      "up": "Acima",
+      "down": "Abaixo",
+      "left": "Esquerda",
+      "right": "Certo"
+    }
+  }
+}

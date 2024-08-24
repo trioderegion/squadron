@@ -1,0 +1,66 @@
+{
+  "sqdrn": {
+    "app": {
+      "title": "Configuration de l'escadron",
+      "formation": "Formation",
+      "link": "Lien",
+      "config": {
+        "elevation": "Élévation",
+        "snap": "Accrochage à la grille",
+        "nopause": "Ne jamais faire de pause"
+      }
+    },
+    "tips": {
+      "tethered": "L'élévation du suiveur est maintenue en formation avec son chef.",
+      "offset": "L'élévation relative du suiveur par rapport à son leader est préservée.",
+      "static": "L'élévation du suiveur n'est pas affectée par son chef. ",
+      "snap": "Le suiveur est accroché à la grille pendant les mouvements.",
+      "nopause": "Déplacer le jeton suiveur ne l’empêchera pas de suivre son chef. ",
+      "formation": "Utilisez les boutons fléchés pour sélectionner la direction de cette formation.<hr><p style='font-size:smaller;'>Le mode Formation maintient le suiveur dans cette orientation relative lorsque son leader se déplace.</p>",
+      "link": "Montez, montez ou reliez les jetons ensemble.<hr><p style='font-size:smaller'>Le mode lié reflète les mouvements de leurs leaders et maintient sa position relative pendant les rotations.</p>",
+      "detect": "Dérivez la direction de la formation à partir de l’orientation du leader."
+    },
+    "elevation": {
+      "tethered": "Attaché",
+      "offset": "Compenser",
+      "static": "Statique"
+    },
+    "setting": {
+      "collideWalls": {
+        "name": "Comportement en cas de collision avec un mur",
+        "hint": "Détermine comment un jeton suiveur répondra à un bloqueur de mouvement le long de son chemin.",
+        "cOff": "Ignorer les murs",
+        "cPause": "Suspendre le suivi",
+        "cTeleport": "Téléportation"
+      },
+      "silentCollide": {
+        "name": "Supprimer les toasts de collision",
+        "hint": "Supprimez la notification indiquant qu'un jeton que vous possédez est entré en collision avec un mur et a cessé de suivre son chef."
+      }
+    },
+    "workflow": {
+      "pick": "Choisissez le chef d'escadron<hr><p style='font-size:smaller'><strong>Traîner:</strong> Mode formation</p><p style='font-size:smaller'><strong>Ctrl-glisser :</strong> Mode lié</p><p style='font-size:smaller'><strong>Alt-Drag :</strong> Configuration avancée</p>",
+      "rejoin": "Rejoindre la formation",
+      "leave": "Quitter la formation"
+    },
+    "feedback": {
+      "pickTarget": "Veuillez cibler (raccourci \"t\") le jeton de chef de cet escadron.",
+      "pickConfirm": {
+        "formation": "{num} jeton(s) sont maintenant en formation avec la cible.",
+        "follow": "{num} jeton(s) se déplacent désormais avec la cible."
+      },
+      "wallCollision": "Le mouvement de {tokenName} entre en collision avec un mur et a quitté la formation."
+    },
+    "orientation": {
+      "title": "Sélectionnez la direction de la formation",
+      "snapLabel": "Accrocher à la grille",
+      "lockElevation": "Verrouiller l'élévation",
+      "persistLabel": "Suivez toujours",
+      "none": "Aucun",
+      "up": "En haut",
+      "down": "Vers le bas",
+      "left": "Gauche",
+      "right": "Droite"
+    }
+  }
+}

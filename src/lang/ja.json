@@ -1,27 +1,62 @@
 {
   "sqdrn": {
+    "app": {
+      "title": "飛行隊構成",
+      "formation": "形成",
+      "link": "リンク",
+      "config": {
+        "elevation": "標高",
+        "snap": "グリッドスナップ",
+        "nopause": "決して一時停止しないでください"
+      }
+    },
+    "tips": {
+      "tethered": "フォロワーの昇格はリーダーとのフォーメーションを維持します。",
+      "offset": "リーダーと比較したフォロワーの相対的な標高は維持されます。",
+      "static": "フォロワーの昇格はリーダーの影響を受けません。",
+      "snap": "フォロワーは移動中にグリッドにスナップされます。",
+      "nopause": "フォロワー トークンを移動しても、リーダーのフォローは一時停止されません。",
+      "formation": "矢印ボタンを使用して、このフォーメーションの方向を選択します。<hr><p style='font-size:smaller;'>フォーメーション モードでは、リーダーが移動しても、フォロワーはこの相対的な方向を維持します。</p>",
+      "link": "トークンをマウント、ライド、またはその他の方法でリンクします。<hr><p style='font-size:smaller'>リンク モードはリーダーの動きを反映し、回転中にその相対位置を維持します。</p>",
+      "detect": "リーダーの向きからフォーメーションの方向を導き出します。"
+    },
+    "elevation": {
+      "tethered": "テザード",
+      "offset": "オフセット",
+      "static": "静的"
+    },
     "setting": {
-      "debug": {
-        "name": "デバッグ有効",
-        "hint": "コンソールに追加のデバッグ情報を表示"
-      },
       "collideWalls": {
-        "name": "壁の衝突判定",
-        "hint": "従者が移動する時、途中に壁があるかどうかを判定し、衝突する場合は一時的に陣形を離脱し停止します。追従を再び有効にするには位置を変えてから陣形に戻してください。"
+        "name": "壁衝突挙動",
+        "hint": "フォロワー トークンがパスに沿った移動ブロッカーにどのように反応するかを決定します。",
+        "cOff": "壁を無視する",
+        "cPause": "フォローを一時停止する",
+        "cTeleport": "テレポート"
+      },
+      "silentCollide": {
+        "name": "衝突トーストの抑制",
+        "hint": "あなたが所有するトークンが壁に衝突し、そのリーダーの追跡を停止したことを示す通知を削除します。"
       }
     },
     "workflow": {
-      "pick": "リーダー選択",
-      "rejoin": "陣形に戻る",
-      "leave": "陣形を離脱する"
+      "pick": "中隊リーダーを選択する<hr><p style='font-size:smaller'><strong>ドラッグ：</strong> フォーメーションモード</p><p style='font-size:smaller'><strong>Ctrl キーを押しながらドラッグ:</strong> リンクモード</p><p style='font-size:smaller'><strong>Alt キーを押しながらドラッグ:</strong> 高度なセットアップ</p>",
+      "rejoin": "フォーメーションに再参加する",
+      "leave": "リーブフォーメーション"
     },
     "feedback": {
-      "pickAsk": "{followerName}が追従するコマを選択してください。",
-      "pickConfirm": "{leaderName}は{followerName}に追従されています。",
-      "wallCollision": "{tokenName}の移動が壁に衝突しましたので一時的に陣形を離脱しました。（コマ[{tokenId}]）"
+      "pickTarget": "この中隊のリーダー トークンをターゲット (ホットキー「t」) してください。",
+      "pickConfirm": {
+        "formation": "現在、{num} 個のトークンがターゲットと形成されています。",
+        "follow": "{num} 個のトークンがターゲットとともに移動中です。"
+      },
+      "wallCollision": "{tokenName} の移動により壁に衝突し、隊列が外れてしまいました。"
     },
     "orientation": {
-      "title": "陣形の方向を選択してください。",
+      "title": "形成方向を選択してください",
+      "snapLabel": "グリッドにスナップ",
+      "lockElevation": "ロックの標高",
+      "persistLabel": "常にフォローする",
+      "none": "なし",
       "up": "上",
       "down": "下",
       "left": "左",
