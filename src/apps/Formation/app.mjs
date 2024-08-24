@@ -24,8 +24,8 @@ export default class extends Application {
 
     if (typeof followers == 'string') followers = [followers];
 
-    if(!leader || followers.length == 0 || !scene) {
-      throw new Error('leader, follower(s), and scene IDs required');
+    if(followers.length == 0 || !scene) {
+      throw new Error('Follower IDs and scene ID required');
     }
 
     this.squad = {leader, followers, scene};
@@ -49,6 +49,13 @@ export default class extends Application {
     if (!value) return;
 
     evt.preventDefault();
+    evt.stopPropagation();
+    this.squad.leader ??= game.user.targets.first()?.id;
+
+    if (!this.squad.leader) {
+      ui.notifications.info(MODULE.localize('feedback.pickTarget'));
+      return;
+    }
     
     const formData = {
       'elevation': 'tether',
@@ -78,6 +85,10 @@ export default class extends Application {
   }
 
   async startFollow(squadData) {
+    if (!this.squad.leader) {
+      throw new Error('Leader token required for squadron creation.');
+    }
+
     if (squadData.orientationVector.mode === 'detect') {
       const tRot = this.leader?.rotation; 
       const tRay = Ray.fromAngle(0,0, Math.toRadians(tRot + 90), 1);

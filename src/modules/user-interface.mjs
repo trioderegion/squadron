@@ -34,7 +34,7 @@ export class UserInterface {
     Hooks.on('dropCanvasData', this._onCanvasDrop);
   }
 
-  static _renderTokenHUD(app, html/*, data*/){
+  static _renderTokenHUD(app, html){
     const token = app?.object?.document;
     if (!token) return;
 
@@ -47,19 +47,24 @@ export class UserInterface {
     if (paused) {
 
       /* we are following, but have paused */
-      UserInterface._addHudButton(html, token, MODULE.localize('workflow.rejoin'), 'fa-sitemap', 
-        ()=>{ allSelected(UserInterface._resumeFollow)});
+      UserInterface._addHudButton(html, token, 'sqdrn.workflow.rejoin', 'fa-sitemap', 
+        ()=>{ allSelected(UserInterface.resume)});
     } else if (paused === undefined) {
 
       /* if the pause flag doesnt exist, we arent following anyone */
       /* special handling of multi-selected for this one, dont use helper */
-      UserInterface._addHudButton(html, token, MODULE.localize('workflow.pick'), 'fa-users',
-        () => { UserInterface._targetLeader(token)});
+      UserInterface._addHudButton(html, token, 'sqdrn.workflow.pick', 'fa-users',
+        () => { 
+          new Formation({
+            followers: canvas.tokens.controlled.map( p => p.id ),
+            scene: canvas.scene.id,
+          }).render(true);
+        });
       UserInterface._dragDrop.bind(html[0]);
     } else {
 
       /* otherwise, we are following normally and have the option to stop */
-      UserInterface._addHudButton(html, token, MODULE.localize('workflow.leave'), 'fa-users-slash', 
+      UserInterface._addHudButton(html, token, 'sqdrn.workflow.leave', 'fa-users-slash', 
         ()=>{ allSelected(UserInterface.stop)});
     }
   }
@@ -155,70 +160,11 @@ export class UserInterface {
   static async stop(followerToken) {
     await Logistics.announceStopFollow(followerToken);
     await followerToken.update({'flags.-=%config.id%': null});
-    if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
+    if (canvas.tokens.hud.object?.id === followerToken.id) canvas.tokens.hud.render(false);
   }
 
   static async resume(followerToken) {
     await followerToken.setFlag('%config.id%', MODULE.FLAG.paused, false);
-    if (canvas.tokens.hud.object) canvas.tokens.hud.render(false);
+    if (canvas.tokens.hud.object?.id === followerToken.id) canvas.tokens.hud.render(false);
   }
-
-  /**
-   * @returns {Promise}
-   */
-  static _resumeFollow(followerToken){
-    return UserInterface.resume(followerToken);
-  }
-
-  static _hookID = null;
-
-  static _toolTarget(followerToken) {
-
-    const hud = followerToken.layer.hud;
-
-    /* use targeting tool */
-    const onTarget = async (user, token, active) => {
-
-      /* we are deslecting something, keep ourselves active
-       * or someone else has targeted something
-       */
-      if(!active || user.id !== game.user.id){
-        return;
-      }
-
-      Hooks.off('targetToken', onTarget);
-      UserInterface._hookID = null;
-      UserInterface._restoreHUD(hud);
-      UserInterface._queryOrientationAndFollow(token.document, followerToken, true); 
-
-      /* remove targets */
-      game.users.get(user.id).broadcastActivity({targets: []})
-      game.user.updateTokenTargets();
-
-    }
-
-    /* suppress the token hud */
-    UserInterface._shrinkHUD(hud)
-
-    /* register our target hook */
-    if (!UserInterface._hookID) UserInterface._hookID = Hooks.on('targetToken', onTarget);
-  }
-
-  static _queryOrientationAndFollow(leaderToken, followerToken, allSelected = true) {
-
-    const followerGroup = allSelected ? canvas.tokens.controlled : [followerToken];
-
-    new Formation({leader:leaderToken.id, followers: followerGroup.map( t => t.id ), scene: leaderToken.parent.id}).render(true);
-    
-  }
-
-  /* UI Controls for switching to targeting,
-   * marking the leader, and notifying
-   */
-  static _targetLeader(followerToken) {
-
-    ui.notifications.info(MODULE.format('feedback.pickTarget', {followerName: followerToken.name}));
-    return UserInterface._toolTarget(followerToken);
-  }
-
 }

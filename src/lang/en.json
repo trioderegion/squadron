@@ -39,13 +39,12 @@
       }
     },
     "workflow": {
-      "pick": "Create Squadron<hr><p style='font-size:smaller'><strong>Drag:</strong> join formation with leader</p><p style='font-size:smaller'><strong>Ctrl-Drag:</strong> link to leader</p><p style='font-size:smaller'><strong>Alt-Drag:</strong> advanced config for leader</p>",
+      "pick": "Choose Squadron Leader<hr><p style='font-size:smaller'><strong>Drag:</strong> Formation mode</p><p style='font-size:smaller'><strong>Ctrl-Drag:</strong> Linked mode</p><p style='font-size:smaller'><strong>Alt-Drag:</strong> Advanced setup</p>",
       "rejoin": "Rejoin Formation",
       "leave": "Leave Formation"
     },
     "feedback": {
-      "pickAsk": "Please select the leader token for {followerName}",
-      "pickTarget": "Please target (hotkey \"t\") the leader token for {followerName}",
+      "pickTarget": "Please target (hotkey \"t\") the leader token for this squadron.",
       "pickConfirm": {
         "formation": "{num} token(s) are now in formation with the target.",
         "follow": "{num} token(s) are now moving along with the target."
