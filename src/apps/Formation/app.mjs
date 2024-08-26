@@ -6,6 +6,21 @@ export default class extends Application {
 
   static register() {
     loadTemplates([this.template]);
+
+    MODULE.applySettings({
+      creationPings: {
+        scope: 'world',
+        config: true,
+        default: 0,
+        type: Number,
+        choices: {
+          0: 'sqdrn.setting.creationPings.all',
+          1: 'sqdrn.setting.creationPings.players',
+          2: 'sqdrn.setting.creationPings.gm',
+          3: 'sqdrn.setting.creationPings.none',
+        },
+      }
+    });
   }
 
   static get defaultOptions() {
@@ -16,8 +31,6 @@ export default class extends Application {
       top: 150,
     });
   }
-
-  
 
   constructor({leader = null, followers = [], scene = null}, options = {}) {
     super(options);
@@ -50,7 +63,10 @@ export default class extends Application {
 
     evt.preventDefault();
     evt.stopPropagation();
-    this.squad.leader ??= game.user.targets.first()?.id;
+
+    /* Even if we were assigned a leader on construction, always use
+     * the current user target (if any) */
+    this.squad.leader = game.user.targets.first()?.id ?? this.squad.leader;
 
     if (!this.squad.leader) {
       ui.notifications.info(MODULE.localize('feedback.pickTarget'));
@@ -84,7 +100,7 @@ export default class extends Application {
     return this.startFollow(squadData);
   }
 
-  async startFollow(squadData) {
+  async startFollow(squadData, silent = false) {
     if (!this.squad.leader) {
       throw new Error('Leader token required for squadron creation.');
     }
@@ -94,8 +110,8 @@ export default class extends Application {
       const tRay = Ray.fromAngle(0,0, Math.toRadians(tRot + 90), 1);
       squadData.orientationVector = {
         mode: 'vector',
-        x: Math.abs(tRay.dx < 1e-10) ? 0 : -tRay.B.x,
-        y: Math.abs(tRay.dy < 1e-10) ? 0 : tRay.B.y,
+        x: -tRay.B.x,
+        y: tRay.B.y,
       }
     } 
 
@@ -117,9 +133,74 @@ export default class extends Application {
     }
 
     /* confirmation info */
-    const type = squadData.orientationVector.mode === 'vector' ? 'formation' : 'follow';
-    const confirmInfo = MODULE.format(`feedback.pickConfirm.${type}`, {num: data.length})
-    ui.notifications.info(confirmInfo);
+    if (!silent) {
+      const type = squadData.orientationVector.mode === 'vector' ? 'formation' : 'follow';
+
+      const confirmInfo = MODULE.format(`feedback.pickConfirm.${type}`, {num: data.length})
+      ui.notifications.info(confirmInfo);
+
+      switch (MODULE.setting('creationPings')) {
+        case 0:
+          break;
+        case 1:
+          if (game.user.hasRole(CONST.USER_ROLES.PLAYER) && !game.user.isGM) break;
+          return data;
+        case 2:
+          if (game.user.isGM) break;
+          return data;
+        case 3:
+          return data;
+      }
+
+      const leaderObject = this.leader.object;
+      const followerObjects = this.squad.followers.map( id => game.scenes.get(this.squad.scene).tokens.get(id)?.object ).filter( p => p );
+
+      /* Chevron on leader */
+      if (leaderObject) {
+        const bounds = leaderObject.bounds;
+        canvas.ping(bounds.center, {
+          style: CONFIG.Canvas.pings.types.PULL,
+          size: (bounds.width + bounds.height) / 2,
+          duration: 1000,
+        });
+      }
+
+      switch (type) {
+        case 'formation':
+          /* Chevron on leader, rotated arrows on followers */
+          const rotRay = new Ray({
+            x: -squadData.orientationVector.x,
+            y: squadData.orientationVector.y
+          },{
+            x: 0, y: 0
+          });
+          followerObjects.forEach( p => {
+            const bounds = p.bounds;
+            canvas.ping(bounds.center, {
+              style: CONFIG.Canvas.pings.types.ARROW,
+              size: (bounds.width + bounds.height),
+              rotation: rotRay.angle + Math.PI,
+              duration: 1500,
+            });
+          });
+
+          break;
+        case 'follow':
+          /* Chevron on leader, pulses on followers */
+          followerObjects.forEach( p => {
+            const bounds = p.bounds;
+            canvas.ping(bounds.center, {
+              style: CONFIG.Canvas.pings.types.PULSE,
+              size: (bounds.width + bounds.height) / 2,
+              rings: 4,
+              duration: 1000,
+            });
+          });
+
+          break;
+      }
+
+    }
 
     return data;
   }

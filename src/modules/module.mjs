@@ -63,8 +63,14 @@ export class MODULE {
     return game.user.id === MODULE.firstGM()?.id;
   }
 
+  static setTargets(placeables = []) {
+    const ids = placeables.map( p => p?.id );
+    game.user.broadcastActivity({targets: ids})
+    game.user.updateTokenTargets(ids);
+  }
+
   static getSize(tokenDoc) {
-    if (tokenDoc.object) return tokenDoc.object.getSize();
+    if (tokenDoc.object) return tokenDoc.object.bounds;
     
     let {width, height} = tokenDoc;
     const grid = tokenDoc.parent.grid;

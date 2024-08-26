@@ -77,20 +77,18 @@ export class Lookout {
     Logistics.announceStopFollow(tokenDoc);
   }
 
-  static _shouldTrack(change) {
-    return (
-      typeof change.x === "number"
+  static _shouldTrack(change, ignoreRotation = false) {
+    const position = typeof change.x === "number"
       || typeof change.y === "number"
       || typeof change.elevation === "number"
-      || typeof change.rotation === "number"
-    );
+    return ignoreRotation ? position : (position || typeof change.rotation === "number");
   }
 
   static _getLocation(tokenDoc, changes = {}) {
     const {width, height} = MODULE.getSize(tokenDoc);
     return {
-      x: (changes.x ?? tokenDoc.x) + width/2,
-      y: (changes.y ?? tokenDoc.y) + height/2,
+      x: (changes.x ?? tokenDoc._source.x) + width/2,
+      y: (changes.y ?? tokenDoc._source.y) + height/2,
       z: changes.elevation ?? tokenDoc.elevation,
       t: Math.toRadians((changes.rotation ?? tokenDoc.rotation) - 90),
     };
@@ -117,7 +115,6 @@ export class Lookout {
 
         const newLoc = Lookout._getLocation(tokenDoc, update);
         const followVector = new FollowVector(newLoc, options.oldLoc[tokenDoc.id]);
-        console.log('old', options.oldLoc[tokenDoc.id], 'new', newLoc, 'vector', followVector);
         const data = {
           leader: {
             tokenId: tokenDoc.id,
@@ -129,16 +126,16 @@ export class Lookout {
 
         MODULE.comms.emit(MODULE.EVENT.leaderMove, data);
       }
+      
       // FOLLOWERS
       if (options.squadronEvent == MODULE.EVENT.leaderMove) {
         /* do not respond to our own move events */
         return;
       }
 
-      /* am I a follower? */
-      const leaders = tokenDoc.getFlag('%config.id%', MODULE.FLAG.leaders) ?? {};
-      if (Object.keys(leaders).length > 0) {
-        /* I am following someone and have moved independently of them -> Pause */
+      /* am I a follower and this movement is not only rotation? Pause */
+      const leaders = tokenDoc.getFlag('%config.id%', MODULE.FLAG.leaders);
+      if (leaders && Object.keys(leaders).length > 0 && Lookout._shouldTrack(update, true)) {
         Lookout.pause(tokenDoc);
       }
     }

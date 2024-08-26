@@ -202,8 +202,9 @@ export class Logistics {
 
     /* Compute X/Y depending on mode */
     if (orientation.mode == 'rel') {
-      pos.x = token.x + orientation.x * forwardVector.dx;
-      pos.y = token.y + orientation.y * forwardVector.dy;
+      /* Grab the token's _final_ position in case we are still animating */
+      pos.x = token._source.x + orientation.x * forwardVector.dx;
+      pos.y = token._source.y + orientation.y * forwardVector.dy;
       if (forwardVector.dt) {
         const ray = new Ray(origin, {x: pos.x + width/2, y: pos.y + height/2}).shiftAngle(-forwardVector.dt);
         pos = {

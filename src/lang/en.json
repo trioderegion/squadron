@@ -36,6 +36,14 @@
       "silentCollide": {
         "name": "Suppress Collision Toasts",
         "hint": "Remove notification indicating a token you own has collided with a wall and stopped following its leader."
+      },
+      "creationPings": {
+        "name": "Show Creation Pings From",
+        "hint": "Show creation of a new squadron as canvas pings to all connected users.",
+        "all": "Everyone",
+        "players": "Players only",
+        "gm": "GM only",
+        "none": "None (disabled)"
       }
     },
     "workflow": {
@@ -47,7 +55,7 @@
       "pickTarget": "Please target (hotkey \"t\") the leader token for this squadron.",
       "pickConfirm": {
         "formation": "{num} token(s) are now in formation with the target.",
-        "follow": "{num} token(s) are now moving along with the target."
+        "follow": "{num} token(s) are now linked with the target."
       },
       "wallCollision": "{tokenName}'s movement collides with a wall and has left formation."
     },
