@@ -1,0 +1,16 @@
+#token-hud .control-icon.%config.id% {
+  transition: transform 0.25s ease-in, box-shadow 0.25s ease-in;
+  box-shadow: 2px 2px 3px var(--color-shadow-dark); 
+  &[draggable="true"] {
+    cursor: grab;
+
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 4px 4px 8px 3px var(--color-shadow-dark)
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+}

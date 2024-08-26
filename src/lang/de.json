@@ -1,0 +1,66 @@
+{
+  "sqdrn": {
+    "app": {
+      "title": "Staffelkonfiguration",
+      "formation": "Bildung",
+      "link": "Link",
+      "config": {
+        "elevation": "Elevation",
+        "snap": "Rastereinrastung",
+        "nopause": "Niemals pausieren"
+      }
+    },
+    "tips": {
+      "tethered": "Die Höhe des Gefolgsmanns wird mit seinem Anführer in Formation gehalten.",
+      "offset": "Die relative Höhe des Followers im Vergleich zu seinem Anführer bleibt erhalten.",
+      "static": "Der Rang des Anhängers wird durch seinen Anführer nicht beeinflusst. ",
+      "snap": "Der Follower rastet bei Bewegungen am Raster ein.",
+      "nopause": "Durch das Verschieben des Anhängermarkers wird dieser nicht daran gehindert, seinem Anführer zu folgen. ",
+      "formation": "Verwenden Sie die Pfeiltasten, um die Richtung dieser Formation auszuwählen.<hr><p style='font-size:smaller;'>Der Formationsmodus hält den Follower in dieser relativen Ausrichtung, während sich sein Anführer bewegt.</p>",
+      "link": "Besteigen, fahren oder verbinden Sie Token auf andere Weise miteinander.<hr><p style='font-size:smaller'>Der verknüpfte Modus spiegelt die Bewegungen ihrer Anführer wider und behält ihre relative Position während der Drehungen bei.</p>",
+      "detect": "Leiten Sie die Richtung der Formation aus der Blickrichtung des Anführers ab."
+    },
+    "elevation": {
+      "tethered": "Angebunden",
+      "offset": "Versatz",
+      "static": "Statisch"
+    },
+    "setting": {
+      "collideWalls": {
+        "name": "Verhalten bei Wandkollisionen",
+        "hint": "Bestimmt, wie ein Follower-Token auf einen Bewegungsblocker auf seinem Weg reagiert.",
+        "cOff": "Ignorieren Sie Wände",
+        "cPause": "Pausieren Sie das Folgen",
+        "cTeleport": "Teleportieren"
+      },
+      "silentCollide": {
+        "name": "Kollisions-Toasts unterdrücken",
+        "hint": "Entfernen Sie die Benachrichtigung, dass ein Token, den Sie besitzen, mit einer Wand kollidiert ist und nicht mehr seinem Anführer folgt."
+      }
+    },
+    "workflow": {
+      "pick": "Wählen Sie den Staffelführer<hr><p style='font-size:smaller'><strong>Ziehen:</strong> Formationsmodus</p><p style='font-size:smaller'><strong>Strg-Ziehen:</strong> Verknüpfter Modus</p><p style='font-size:smaller'><strong>Alt-Ziehen:</strong> Erweiterte Einrichtung</p>",
+      "rejoin": "Treten Sie der Formation wieder bei",
+      "leave": "Formation verlassen"
+    },
+    "feedback": {
+      "pickTarget": "Bitte zielen Sie (Hotkey „t“) auf den Anführermarker für dieses Geschwader.",
+      "pickConfirm": {
+        "formation": "{num} Token befinden sich jetzt in Formation beim Ziel.",
+        "follow": "{num} Token bewegen sich jetzt zusammen mit dem Ziel."
+      },
+      "wallCollision": "Die Bewegung von {tokenName} kollidiert mit einer Wand und hat die Formation verlassen."
+    },
+    "orientation": {
+      "title": "Formationsrichtung wählen",
+      "snapLabel": "Am Raster ausrichten",
+      "lockElevation": "Höhe sperren",
+      "persistLabel": "Folgen Sie immer",
+      "none": "Keiner",
+      "up": "Hoch",
+      "down": "Runter",
+      "left": "Links",
+      "right": "Rechts"
+    }
+  }
+}

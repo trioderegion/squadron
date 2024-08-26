@@ -4,8 +4,10 @@
   grid: 
     "header header header . common" auto
     ".      up      .     . common" auto
-    "left   normal  right . elevation" auto
+    "left   detect  right . elevation" auto
     ".      down    .     . elevation" auto
+    ".      .    .     . elevation" auto
+    "normal normal  normal . ." auto
     / 1fr 1fr 1fr 5px 2fr;
 
   align-items:center;

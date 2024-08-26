@@ -15,6 +15,9 @@ export class FollowVector extends Ray {
      * @type {number}
      */
     this.dz = B.z - A.z;
+
+    this.t0 = A.t;
+    this.dt = B.t - A.t;
   }
 }
 
@@ -152,7 +155,7 @@ export class Logistics {
       /* this was serialized from another client */
       followVector = new FollowVector(followVector.A, followVector.B);
     }
-
+    
     /* record last user in case of collision */
     const user = token.getFlag('%config.id%', MODULE.FLAG.lastUser) ?? {};
 
@@ -162,7 +165,7 @@ export class Logistics {
 
     /* snap to the grid if requested.*/
     if (snap) {
-      foundry.utils.mergeObject(position, token.parent.grid.getSnappedPoint(position, {mode: CONST.GRID_SNAPPING_MODES.TOP_LEFT_CORNER}));
+      foundry.utils.mergeObject(position, token.parent.grid.getSnappedPoint(position, {mode: CONST.GRID_SNAPPING_MODES.CORNER}));
     }
 
     /* check if we have moved -- i.e. on the 2d canvas */
@@ -194,14 +197,23 @@ export class Logistics {
   static _calculateNewPosition(forwardVector, delta, locks, token){
     const origin = forwardVector.A;
     const {angle, distance, dz, orientation} = delta; 
+    const {height, width} = MODULE.getSize(token);
     let pos = {};
 
     /* Compute X/Y depending on mode */
-    if (delta.orientation.mode == 'rel') {
-      pos.x = token.x + orientation.x * forwardVector.dx;
-      pos.y = token.y + orientation.y * forwardVector.dy;
+    if (orientation.mode == 'rel') {
+      /* Grab the token's _final_ position in case we are still animating */
+      pos.x = token._source.x + orientation.x * forwardVector.dx;
+      pos.y = token._source.y + orientation.y * forwardVector.dy;
+      if (forwardVector.dt) {
+        const ray = new Ray(origin, {x: pos.x + width/2, y: pos.y + height/2}).shiftAngle(-forwardVector.dt);
+        pos = {
+          x: ray.B.x - width/2,
+          y: ray.B.y - height/2,
+        }
+      }
     } else {
-      const offsetAngle = forwardVector.angle;
+      const offsetAngle = forwardVector.distance < 1e-10 ? forwardVector.A.t : forwardVector.angle;
 
       /* if planar locked preserve initial orientation */
       const finalAngle = offsetAngle + angle;
@@ -209,8 +221,7 @@ export class Logistics {
       const newLocation = Ray.fromAngle(origin.x, origin.y, finalAngle, distance);
 
       // give x/y if any 2d movement occured
-      if (forwardVector.dx || forwardVector.dy){
-        const {height, width} = MODULE.getSize(token);
+      if (forwardVector.dx || forwardVector.dy || forwardVector.dt){
         pos.x = newLocation.B.x - width/2;
         pos.y = newLocation.B.y - height/2;
       }
@@ -277,11 +288,13 @@ export class Logistics {
       })
     }
 
-    await game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.stops, {squadronEvent: MODULE.EVENT.leaderMove});
+    const scene = game.scenes.get(eventData.leader.sceneId);
 
-    await game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.teleports, {teleport: true, squadronEvent: MODULE.EVENT.leaderMove})
+    await scene.updateEmbeddedDocuments('Token', sortedActions.stops, {squadronEvent: MODULE.EVENT.leaderMove});
 
-    return game.scenes.get(eventData.leader.sceneId).updateEmbeddedDocuments('Token', sortedActions.moves, {squadronEvent: MODULE.EVENT.leaderMove})
+    await scene.updateEmbeddedDocuments('Token', sortedActions.teleports, {teleport: true, squadronEvent: MODULE.EVENT.leaderMove})
+
+    return scene.updateEmbeddedDocuments('Token', sortedActions.moves, {squadronEvent: MODULE.EVENT.leaderMove})
   }
 
   static async handleRemoveFollower(eventData) {

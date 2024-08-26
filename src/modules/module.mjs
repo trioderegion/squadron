@@ -28,6 +28,7 @@ export class MODULE {
     RIGHT: Object.freeze({x:-1, y:0, mode:'vector'}),
     SHADOW: Object.freeze({x:-1, y:-1, z:-1, mode:'rel'}),
     MIRROR: Object.freeze({x:1, y:1, z:1, mode:'rel'}),
+    DETECT: Object.freeze({x: 0, y: 0, z: 0, mode: 'detect'}),
     QUERY: true,
   })
 
@@ -62,8 +63,14 @@ export class MODULE {
     return game.user.id === MODULE.firstGM()?.id;
   }
 
+  static setTargets(placeables = []) {
+    const ids = placeables.map( p => p?.id );
+    game.user.broadcastActivity({targets: ids})
+    game.user.updateTokenTargets(ids);
+  }
+
   static getSize(tokenDoc) {
-    if (tokenDoc.object) return tokenDoc.object.getSize();
+    if (tokenDoc.object) return tokenDoc.object.bounds;
     
     let {width, height} = tokenDoc;
     const grid = tokenDoc.parent.grid;

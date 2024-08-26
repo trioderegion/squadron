@@ -1,4 +1,4 @@
-<h2 style="grid-area:header">{{localize 'sqdrn.app.formation'}}<i data-tooltip="{{{localize 'sqdrn.tips.formation'}}}" class="fa-regular fa-circle-question fa-xs"></i></h2>
+<h2 style="grid-area:header">{{localize 'sqdrn.app.formation'}}<i data-tooltip="sqdrn.tips.formation" class="fa-regular fa-circle-question fa-xs"></i></h2>
 
 <button style="grid-area:up;" data-value="UP"><i
     class="fa-solid fa-arrow-up"
@@ -16,32 +16,36 @@
     class="fa-solid fa-arrow-right"
   ></i></button>
 
-<button style="grid-area:normal" data-tooltip="{{{localize 'sqdrn.tips.pulled'}}}" data-value="SHADOW"><i
-    class="fa-solid fa-ghost"
+<button style="grid-area:normal" data-tooltip="sqdrn.tips.link" data-value="SHADOW">{{localize 'sqdrn.app.link'}} <i
+    class="fa-solid fa-link"
+  ></i></button>
+
+<button style="grid-area:detect" data-tooltip="sqdrn.tips.detect" data-value="DETECT"><i
+    class="fa-solid fa-street-view"
   ></i></button>
 
 <form class="flexcol" style="grid-area:elevation;">
   <h3>{{localize 'sqdrn.app.config.elevation'}}</h3>
-  <label data-tooltip="{{{localize 'sqdrn.tips.tethered'}}}">
+  <label data-tooltip="sqdrn.tips.tethered">
     <input type="radio" checked value="tether" name="elevation" />
     {{localize 'sqdrn.elevation.tethered'}}
   </label>
-  <label data-tooltip="{{{localize 'sqdrn.tips.offset'}}}">
+  <label data-tooltip="sqdrn.tips.offset">
     <input type="radio" value="offset" name="elevation" />
     {{localize 'sqdrn.elevation.offset'}}
   </label>
-  <label data-tooltip="{{{localize 'sqdrn.tips.static'}}}">
+  <label data-tooltip="sqdrn.tips.static">
     <input type="radio" value="static" name="elevation" />
     {{localize 'sqdrn.elevation.static'}}
   </label>
 </form>
 <form class="flexcol" style="grid-area:common;">
   <label>
-    <input type="checkbox" data-tooltip="{{{localize 'sqdrn.tips.snap'}}}" checked name="snap-grid" />
+    <input type="checkbox" data-tooltip="sqdrn.tips.snap" checked name="snap-grid" />
     {{localize 'sqdrn.app.config.snap'}}
   </label>
   <label>
-    <input type="checkbox" data-tooltip="{{{localize 'sqdrn.tips.nopause'}}}" name="no-pause" />
+    <input type="checkbox" data-tooltip="sqdrn.tips.nopause" name="no-pause" />
     {{localize 'sqdrn.app.config.nopause'}}
   </label>
 </form>

@@ -3,7 +3,7 @@
     "app": {
       "title": "Squadron Configuration",
       "formation": "Formation",
-      "follow": "Follow",
+      "link": "Link",
       "config": {
         "elevation": "Elevation",
         "snap": "Grid Snap",
@@ -14,10 +14,11 @@
       "tethered": "Follower's elevation is kept in formation with their leader.",
       "offset": "Follower's relative elevation compared to their leader is preserved.",
       "static": "Follower's elevation is not affected by their leader. Useful for areas of effect or following a flying token.",
-      "pulled": "Follower shadows their leader's movements. Useful for riding vehicles or joining multiple tokens together.",
       "snap": "Follower is snapped to grid during movements.",
       "nopause": "Moving the follower token will not pause it from following their leader. Useful for riding vehicles.",
-      "formation": "Keep the follower in their relative position (e.g. <q>behind</q> or <q>in front</q>) as the leader moves. Select the direction your leader is moving or the direction the formation is facing."
+      "formation": "Use the arrow buttons to select the direction of this formation.<hr><p style='font-size:smaller;'>Formation mode keeps the follower in this relative orientation as their leader moves.</p>",
+      "link": "Mount, ride, or otherwise link tokens together.<hr><p style='font-size:smaller'>Linked mode mirrors their leaders movements and maintains their relative position during rotations.</p>",
+      "detect": "Derive formation direction from leader's facing."
     },
     "elevation": {
       "tethered": "Tethered",
@@ -35,17 +36,27 @@
       "silentCollide": {
         "name": "Suppress Collision Toasts",
         "hint": "Remove notification indicating a token you own has collided with a wall and stopped following its leader."
+      },
+      "creationPings": {
+        "name": "Show Creation Pings From",
+        "hint": "Show creation of a new squadron as canvas pings to all connected users.",
+        "all": "Everyone",
+        "players": "Players only",
+        "gm": "GM only",
+        "none": "None (disabled)"
       }
     },
     "workflow": {
-      "pick": "Pick Leader",
+      "pick": "Choose Squadron Leader<hr><p style='font-size:smaller'><strong>Drag:</strong> Formation mode</p><p style='font-size:smaller'><strong>Ctrl-Drag:</strong> Linked mode</p><p style='font-size:smaller'><strong>Alt-Drag:</strong> Advanced setup</p>",
       "rejoin": "Rejoin Formation",
       "leave": "Leave Formation"
     },
     "feedback": {
-      "pickAsk": "Please select the leader token for {followerName}",
-      "pickTarget": "Please target (hotkey \"t\") the leader token for {followerName}",
-      "pickConfirm": "{num} token(s) are now in formation.",
+      "pickTarget": "Please target (hotkey \"t\") the leader token for this squadron.",
+      "pickConfirm": {
+        "formation": "{num} token(s) are now in formation with the target.",
+        "follow": "{num} token(s) are now linked with the target."
+      },
       "wallCollision": "{tokenName}'s movement collides with a wall and has left formation."
     },
     "orientation": {
