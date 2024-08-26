@@ -149,7 +149,7 @@ export class UserInterface {
   static _onCanvasDrop(canvas, {type, selected = [], x, y, alt, ctrl}) {
     if (type !== '%config.id%/target' || selected?.length == 0) return;
     
-    UserInterface._restoreHUD(canvas.tokens.hud);
+    const anim = UserInterface._restoreHUD(canvas.tokens.hud);
 
     /* create 20x20 target area to find placeables */
     let targets = [];
@@ -172,7 +172,7 @@ export class UserInterface {
         formation.render(true);
 
       } else if (ctrl) {
-        UserInterface._restoreHUD(canvas.tokens.hud).then( _ => {
+        anim.then( _ => {
           formation.startFollow({
             orientationVector: MODULE.CONST.SHADOW,
             snap: false,
@@ -181,9 +181,9 @@ export class UserInterface {
               follow: true,
             }
           });
-      })
+        })
       } else {
-        UserInterface._restoreHUD(canvas.tokens.hud).then( _ => {
+        anim.then( _ => {
           formation.startFollow({
             orientationVector: MODULE.CONST.DETECT,
             snap: true,

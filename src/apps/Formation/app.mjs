@@ -27,7 +27,8 @@ export default class extends Application {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: [...super.defaultOptions.classes, '%config.id%', this.name],
       template: this.template,
-      title: MODULE.format('app.title'),
+      title: 'sqdrn.app.title',
+      id: '%config-id%-Formation',
       top: 150,
     });
   }
