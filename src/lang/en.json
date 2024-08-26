@@ -17,7 +17,7 @@
       "snap": "Follower is snapped to grid during movements.",
       "nopause": "Moving the follower token will not pause it from following their leader. Useful for riding vehicles.",
       "formation": "Use the arrow buttons to select the direction of this formation.<hr><p style='font-size:smaller;'>Formation mode keeps the follower in this relative orientation as their leader moves.</p>",
-      "link": "Mount, ride, or otherwise link tokens together.<hr><p style='font-size:smaller'>Linked mode mirrors their leaders movements and maintains its relative position during rotations.</p>",
+      "link": "Mount, ride, or otherwise link tokens together.<hr><p style='font-size:smaller'>Linked mode mirrors their leaders movements and maintains their relative position during rotations.</p>",
       "detect": "Derive formation direction from leader's facing."
     },
     "elevation": {
